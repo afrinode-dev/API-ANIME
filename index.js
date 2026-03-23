@@ -16,16 +16,15 @@ const CONFIG = {
   currentDomain: 'anime-sama.to',
   mainDomain: null,
   baseUrl: null,
-  domainCheckInterval: 24 * 60 * 60 * 1000,
-  lastDomainCheck: null,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 };
 
 // AnimeInfo depuis GitHub
 const ANIME_INFO_URL = 'https://raw.githubusercontent.com/afrinode-dev/ANIME-JSON/refs/heads/main/anime.json';
 
-// Liste des animes
+// Cache en mémoire
 let animeList = [];
+let isInitialized = false;
 
 // Types de lecteurs
 const playerTypes = {
@@ -60,10 +59,10 @@ const scanTypes = {
 // ==================== FONCTIONS DE GESTION DU DOMAINE ====================
 
 /**
- * Détecte le domaine principal d'Anime Sama depuis anime-sama.pw
+ * Détecte le domaine principal d'Anime Sama
  */
 async function detectMainDomain() {
-  console.log('🔍 Détection du domaine principal depuis anime-sama.pw...');
+  console.log('🔍 Détection du domaine principal...');
   
   const portalUrl = 'https://anime-sama.pw';
   
@@ -77,7 +76,6 @@ async function detectMainDomain() {
     let mainDomain = null;
     let mainDomainUrl = null;
     
-    // Recherche des liens
     $('a').each((i, element) => {
       const text = $(element).text().trim();
       const href = $(element).attr('href');
@@ -99,7 +97,6 @@ async function detectMainDomain() {
       CONFIG.baseUrl = mainDomainUrl.startsWith('http') ? mainDomainUrl : `https://${mainDomain}`;
       console.log(`✅ Domaine principal détecté: ${CONFIG.mainDomain}`);
     } else {
-      // Fallback
       const potentialDomains = ['https://anime-sama.tv', 'https://anime-sama.eu', 'https://anime-sama.si'];
       
       for (const domain of potentialDomains) {
@@ -132,15 +129,11 @@ async function detectMainDomain() {
     CONFIG.baseUrl = `https://${CONFIG.mainDomain}`;
   }
   
-  CONFIG.lastDomainCheck = Date.now();
   return CONFIG.mainDomain;
 }
 
 // ==================== FONCTIONS DE PARSING ====================
 
-/**
- * Normalise un slug
- */
 function normalizeSlug(title) {
   return title
     .toLowerCase()
@@ -151,9 +144,6 @@ function normalizeSlug(title) {
     .replace(/^-|-$/g, '');
 }
 
-/**
- * Vérifie si une URL existe
- */
 async function checkUrlExists(url) {
   try {
     const response = await axios.head(url, {
@@ -166,9 +156,6 @@ async function checkUrlExists(url) {
   }
 }
 
-/**
- * Extrait la thumbnail d'une page
- */
 async function extractThumbnail(html, pageUrl) {
   try {
     const $ = cheerio.load(html);
@@ -195,9 +182,6 @@ async function extractThumbnail(html, pageUrl) {
   }
 }
 
-/**
- * Extrait la description d'une page
- */
 async function extractDescription(html) {
   try {
     const $ = cheerio.load(html);
@@ -214,9 +198,6 @@ async function extractDescription(html) {
   }
 }
 
-/**
- * Parse un fichier episodes.js
- */
 async function parseEpisodesJs(url) {
   try {
     console.log(`🔍 Récupération: ${url}`);
@@ -233,7 +214,6 @@ async function parseEpisodesJs(url) {
     const episodes = {};
     let playerCounter = 0;
     
-    // Regex pour les tableaux d'épisodes
     const episodeRegex = /var\s+(eps\d+)\s*=\s*\[(.*?)\];/gs;
     let match;
     
@@ -298,9 +278,6 @@ async function parseEpisodesJs(url) {
   }
 }
 
-/**
- * Scrape les informations complètes d'une page
- */
 async function scrapePageInfo(url) {
   try {
     const response = await axios.get(url, {
@@ -332,10 +309,11 @@ async function scrapePageInfo(url) {
 
 // ==================== FONCTIONS DE GESTION DES ANIMES ====================
 
-/**
- * Charge la liste des animes depuis GitHub
- */
 async function loadAnimeList() {
+  if (isInitialized && animeList.length > 0) {
+    return true;
+  }
+  
   try {
     console.log('📥 Chargement de la liste des animes depuis GitHub...');
     const response = await axios.get(ANIME_INFO_URL, {
@@ -346,7 +324,7 @@ async function loadAnimeList() {
     animeList = response.data;
     
     animeList.forEach(anime => {
-      if (anime.link.includes('/scan')) {
+      if (anime.link && anime.link.includes('/scan')) {
         anime.type = 'scan';
         const scanMatch = anime.link.match(/catalogue\/([^\/]+)\/scan(?:-([^\/]+))?\/(vf|vostfr)/);
         if (scanMatch) {
@@ -359,36 +337,35 @@ async function loadAnimeList() {
       }
     });
     
+    isInitialized = true;
     console.log(`✅ Chargé ${animeList.length} animes/scans depuis GitHub`);
     return true;
   } catch (error) {
-    console.error('❌ Erreur chargement AnimeInfo.json depuis GitHub:', error.message);
+    console.error('❌ Erreur chargement:', error.message);
     return false;
   }
 }
 
-/**
- * Trouve un anime dans la liste
- */
 function findAnime(animeId) {
   const normalizedId = animeId.toLowerCase().trim();
   
   let anime = animeList.find(a => 
-    a.title.toLowerCase() === normalizedId ||
-    normalizeSlug(a.title) === normalizedId
+    a.title && (a.title.toLowerCase() === normalizedId ||
+    normalizeSlug(a.title) === normalizedId)
   );
   
   if (!anime) {
     anime = animeList.find(a => 
-      a.title.toLowerCase().includes(normalizedId) ||
-      normalizeSlug(a.title).includes(normalizedId)
+      a.title && (a.title.toLowerCase().includes(normalizedId) ||
+      normalizeSlug(a.title).includes(normalizedId))
     );
   }
   
   if (!anime) {
     anime = animeList.find(a => {
+      if (!a.link) return false;
       const slugMatch = a.link.match(/catalogue\/([^\/]+)/);
-      const slug = slugMatch ? slugMatch[1] : normalizeSlug(a.title);
+      const slug = slugMatch ? slugMatch[1] : (a.title ? normalizeSlug(a.title) : '');
       return slug.includes(normalizedId);
     });
   }
@@ -396,9 +373,6 @@ function findAnime(animeId) {
   return anime;
 }
 
-/**
- * Détecte les saisons disponibles
- */
 async function detectAvailableSeasons(animeUrl, animeSlug, language) {
   try {
     const response = await axios.get(animeUrl, {
@@ -413,10 +387,10 @@ async function detectAvailableSeasons(animeUrl, animeSlug, language) {
       const href = $(element).attr('href');
       const text = $(element).text().toLowerCase();
       
-      if (href && (href.includes(`/saison`) || text.includes('saison'))) {
+      if (href && (href.includes('/saison') || text.includes('saison'))) {
         let fullUrl = href.startsWith('http') ? href : CONFIG.baseUrl + href;
         
-        if (fullUrl.includes(animeSlug) || href.includes(`/catalogue/`)) {
+        if (fullUrl.includes(animeSlug) || href.includes('/catalogue/')) {
           const seasonMatch = href.match(/saison(\d+)([a-z]*)/i) || 
                              href.match(/season[\s\-]?(\d+)([a-z]*)/i) ||
                              text.match(/saison[\s\-]?(\d+)([a-z]*)/i);
@@ -466,9 +440,6 @@ async function detectAvailableSeasons(animeUrl, animeSlug, language) {
   }
 }
 
-/**
- * Détecte les scans disponibles
- */
 async function detectAvailableScans(animeUrl, animeSlug, language) {
   try {
     const response = await axios.get(animeUrl, {
@@ -485,7 +456,7 @@ async function detectAvailableScans(animeUrl, animeSlug, language) {
       if (href && href.includes('/scan')) {
         let fullUrl = href.startsWith('http') ? href : CONFIG.baseUrl + href;
         
-        if (fullUrl.includes(animeSlug) || href.includes(`/catalogue/`)) {
+        if (fullUrl.includes(animeSlug) || href.includes('/catalogue/')) {
           const scanMatch = href.match(/scan(?:-([^\/]+))?\/(vf|vostfr)/);
           
           if (scanMatch) {
@@ -539,22 +510,18 @@ async function detectAvailableScans(animeUrl, animeSlug, language) {
   }
 }
 
-// ==================== FONCTIONS PRINCIPALES POUR LES ENDPOINTS ====================
+// ==================== HANDLERS ====================
 
-/**
- * Gère les détails d'un anime (saisons et scans)
- */
 async function handleAnimeDetails(animeId, language = 'vostfr') {
+  await loadAnimeList();
+  
   const anime = findAnime(animeId);
   
-  if (!anime) {
+  if (!anime || !anime.link) {
     return { 
       success: false, 
       error: 'Anime non trouvé',
-      suggestions: animeList
-        .filter(a => a.title.toLowerCase().includes(animeId.toLowerCase().substring(0, 3)))
-        .slice(0, 5)
-        .map(a => ({ title: a.title, type: a.type || 'anime' }))
+      suggestions: animeList.slice(0, 5).map(a => ({ title: a.title, type: a.type || 'anime' }))
     };
   }
   
@@ -592,13 +559,12 @@ async function handleAnimeDetails(animeId, language = 'vostfr') {
   };
 }
 
-/**
- * Gère les détails d'une saison
- */
 async function handleSeasonDetails(animeId, season, language = 'vostfr') {
+  await loadAnimeList();
+  
   const anime = findAnime(animeId);
   
-  if (!anime) {
+  if (!anime || !anime.link) {
     return { success: false, error: 'Anime non trouvé' };
   }
   
@@ -695,13 +661,12 @@ async function handleSeasonDetails(animeId, season, language = 'vostfr') {
   };
 }
 
-/**
- * Gère les détails d'un scan
- */
 async function handleScanDetails(animeId, scanName = 'scan', language = 'vostfr') {
+  await loadAnimeList();
+  
   const anime = findAnime(animeId);
   
-  if (!anime) {
+  if (!anime || !anime.link) {
     return { success: false, error: 'Anime/Scan non trouvé' };
   }
   
@@ -807,7 +772,14 @@ async function handleScanDetails(animeId, scanName = 'scan', language = 'vostfr'
 
 // ==================== ENDPOINTS API ====================
 
-// Endpoint pour vérifier/mettre à jour le domaine
+// Middleware pour initialiser avant chaque requête
+app.use(async (req, res, next) => {
+  if (!CONFIG.mainDomain) {
+    await detectMainDomain();
+  }
+  next();
+});
+
 app.get('/api/domain/update', async (req, res) => {
   try {
     const oldDomain = CONFIG.mainDomain;
@@ -822,19 +794,13 @@ app.get('/api/domain/update', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// API Endpoint pour la liste des animes
 app.get('/api/anime', async (req, res) => {
   try {
-    if (animeList.length === 0) {
-      await loadAnimeList();
-    }
+    await loadAnimeList();
     
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
@@ -850,7 +816,7 @@ app.get('/api/anime', async (req, res) => {
     const search = req.query.search;
     if (search && search.length >= 2) {
       result = result.filter(item => 
-        item.title.toLowerCase().includes(search.toLowerCase())
+        item.title && item.title.toLowerCase().includes(search.toLowerCase())
       );
     }
     
@@ -858,42 +824,20 @@ app.get('/api/anime', async (req, res) => {
     const totalPages = Math.ceil(total / limit);
     const paginatedResult = result.slice(offset, offset + limit);
     
-    const withThumbnails = req.query.thumbnails === 'true';
-    let finalResult = paginatedResult;
-    
-    if (withThumbnails) {
-      finalResult = await Promise.all(paginatedResult.map(async (item) => {
-        try {
-          const info = await scrapePageInfo(item.link);
-          return { 
-            ...item, 
-            thumbnail: info.thumbnail,
-            description: info.description ? info.description.substring(0, 200) : null
-          };
-        } catch (error) {
-          return { ...item, thumbnail: null, description: null };
-        }
-      }));
-    }
-    
     res.json({
       success: true,
-      count: finalResult.length,
+      count: paginatedResult.length,
       total: total,
       page: page,
       totalPages: totalPages,
       type: type || 'all',
-      data: finalResult
+      data: paginatedResult
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// API Endpoint pour les détails d'un anime
 app.get('/api/anime/:id', async (req, res) => {
   try {
     const animeId = decodeURIComponent(req.params.id);
@@ -902,23 +846,15 @@ app.get('/api/anime/:id', async (req, res) => {
     const result = await handleAnimeDetails(animeId, language);
     
     if (!result.success) {
-      return res.status(404).json({
-        success: false,
-        error: result.error,
-        suggestions: result.suggestions || []
-      });
+      return res.status(404).json(result);
     }
     
     res.json(result);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// API Endpoint pour une saison spécifique
 app.get('/api/anime/:id/saison/:season', async (req, res) => {
   try {
     const animeId = decodeURIComponent(req.params.id);
@@ -928,22 +864,15 @@ app.get('/api/anime/:id/saison/:season', async (req, res) => {
     const result = await handleSeasonDetails(animeId, season, language);
     
     if (!result.success) {
-      return res.status(404).json({
-        success: false,
-        error: result.error
-      });
+      return res.status(404).json(result);
     }
     
     res.json(result);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// API Endpoint pour un scan spécifique
 app.get('/api/scan/:id', async (req, res) => {
   try {
     const animeId = decodeURIComponent(req.params.id);
@@ -953,34 +882,26 @@ app.get('/api/scan/:id', async (req, res) => {
     const result = await handleScanDetails(animeId, scanName, language);
     
     if (!result.success) {
-      return res.status(404).json({
-        success: false,
-        error: result.error
-      });
+      return res.status(404).json(result);
     }
     
     res.json(result);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// API Endpoint pour tous les scans d'un anime
 app.get('/api/anime/:id/scans', async (req, res) => {
   try {
+    await loadAnimeList();
+    
     const animeId = decodeURIComponent(req.params.id);
     const language = req.query.lang || 'vostfr';
     
     const anime = findAnime(animeId);
     
-    if (!anime) {
-      return res.status(404).json({
-        success: false,
-        error: 'Anime non trouvé'
-      });
+    if (!anime || !anime.link) {
+      return res.status(404).json({ success: false, error: 'Anime non trouvé' });
     }
     
     const slugMatch = anime.link.match(/catalogue\/([^\/]+)/);
@@ -988,58 +909,24 @@ app.get('/api/anime/:id/scans', async (req, res) => {
     
     const availableScans = await detectAvailableScans(anime.link, animeSlug, language);
     
-    const allScans = animeList.filter(item => 
-      item.type === 'scan' && 
-      item.scanSlug === animeSlug &&
-      (!language || item.language === language)
-    );
-    
-    const groupedScans = {};
-    allScans.forEach(scan => {
-      const key = scan.scanName;
-      if (!groupedScans[key]) {
-        groupedScans[key] = {
-          scanName: scan.scanName,
-          displayName: scanTypes[`scan-${scan.scanName}`] || (scan.scanName === 'main' ? 'Scan Principal' : scan.scanName),
-          languages: [],
-          urls: []
-        };
-      }
-      
-      if (!groupedScans[key].languages.includes(scan.language)) {
-        groupedScans[key].languages.push(scan.language);
-        groupedScans[key].urls.push({
-          language: scan.language,
-          url: scan.link
-        });
-      }
-    });
-    
     res.json({
       success: true,
       data: {
         id: animeSlug,
         title: anime.title,
         availableScans: availableScans,
-        allScans: Object.values(groupedScans),
-        totalScans: Object.keys(groupedScans).length,
+        totalScans: availableScans.length,
         language: language
       }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// API Endpoint pour lister tous les scans disponibles
 app.get('/api/scans', async (req, res) => {
   try {
-    if (animeList.length === 0) {
-      await loadAnimeList();
-    }
+    await loadAnimeList();
     
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
@@ -1055,33 +942,34 @@ app.get('/api/scans', async (req, res) => {
     
     if (search && search.length >= 2) {
       scans = scans.filter(scan => 
-        scan.title.toLowerCase().includes(search.toLowerCase()) ||
-        (scan.scanSlug && scan.scanSlug.includes(search.toLowerCase()))
+        scan.title && scan.title.toLowerCase().includes(search.toLowerCase())
       );
     }
     
     const groupedScans = {};
     scans.forEach(scan => {
-      if (!groupedScans[scan.scanSlug]) {
+      if (scan.scanSlug && !groupedScans[scan.scanSlug]) {
         groupedScans[scan.scanSlug] = {
-          title: scan.title.replace(/ \(VF\)$| \(VOSTFR\)$/, ''),
+          title: scan.title ? scan.title.replace(/ \(VF\)$| \(VOSTFR\)$/, '') : 'Unknown',
           scanSlug: scan.scanSlug,
           languages: [],
           scans: []
         };
       }
       
-      if (!groupedScans[scan.scanSlug].languages.includes(scan.language)) {
-        groupedScans[scan.scanSlug].languages.push(scan.language);
+      if (scan.scanSlug && groupedScans[scan.scanSlug]) {
+        if (!groupedScans[scan.scanSlug].languages.includes(scan.language)) {
+          groupedScans[scan.scanSlug].languages.push(scan.language);
+        }
+        
+        groupedScans[scan.scanSlug].scans.push({
+          scanName: scan.scanName,
+          displayName: scanTypes[`scan-${scan.scanName}`] || (scan.scanName === 'main' ? 'Scan Principal' : scan.scanName),
+          language: scan.language,
+          url: scan.link,
+          type: 'scan'
+        });
       }
-      
-      groupedScans[scan.scanSlug].scans.push({
-        scanName: scan.scanName,
-        displayName: scanTypes[`scan-${scan.scanName}`] || (scan.scanName === 'main' ? 'Scan Principal' : scan.scanName),
-        language: scan.language,
-        url: scan.link,
-        type: 'scan'
-      });
     });
     
     const scanList = Object.values(groupedScans);
@@ -1099,14 +987,10 @@ app.get('/api/scans', async (req, res) => {
       data: paginatedResult
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Endpoint pour récupérer un épisode spécifique
 app.get('/api/anime/:id/saison/:season/episode/:episode', async (req, res) => {
   try {
     const animeId = decodeURIComponent(req.params.id);
@@ -1116,10 +1000,7 @@ app.get('/api/anime/:id/saison/:season/episode/:episode', async (req, res) => {
     const player = req.query.player;
     
     if (isNaN(episode) || episode < 1) {
-      return res.status(400).json({
-        success: false,
-        error: 'Numéro d\'épisode invalide'
-      });
+      return res.status(400).json({ success: false, error: 'Numéro d\'épisode invalide' });
     }
     
     const seasonResult = await handleSeasonDetails(animeId, season, language);
@@ -1196,14 +1077,10 @@ app.get('/api/anime/:id/saison/:season/episode/:episode', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Endpoint pour récupérer un chapitre spécifique d'un scan
 app.get('/api/scan/:id/chapitre/:chapter', async (req, res) => {
   try {
     const animeId = decodeURIComponent(req.params.id);
@@ -1213,10 +1090,7 @@ app.get('/api/scan/:id/chapitre/:chapter', async (req, res) => {
     const volume = req.query.volume;
     
     if (isNaN(chapter) || chapter < 1) {
-      return res.status(400).json({
-        success: false,
-        error: 'Numéro de chapitre invalide'
-      });
+      return res.status(400).json({ success: false, error: 'Numéro de chapitre invalide' });
     }
     
     const scanResult = await handleScanDetails(animeId, scanName, language);
@@ -1290,30 +1164,25 @@ app.get('/api/scan/:id/chapitre/:chapter', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Endpoint recherche
 app.get('/api/search', async (req, res) => {
   try {
+    await loadAnimeList();
+    
     const query = req.query.q;
     const limit = parseInt(req.query.limit) || 20;
     const page = parseInt(req.query.page) || 1;
     const type = req.query.type;
     
     if (!query || query.length < 2) {
-      return res.status(400).json({
-        success: false,
-        error: 'Requête de recherche trop courte (min 2 caractères)'
-      });
+      return res.status(400).json({ success: false, error: 'Requête de recherche trop courte (min 2 caractères)' });
     }
     
     let searchResults = animeList.filter(item => 
-      item.title.toLowerCase().includes(query.toLowerCase())
+      item.title && item.title.toLowerCase().includes(query.toLowerCase())
     );
     
     if (type && ['anime', 'scan'].includes(type)) {
@@ -1336,24 +1205,17 @@ app.get('/api/search', async (req, res) => {
       data: paginatedResults
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Endpoint proxy streaming
 app.get('/api/proxy/stream', async (req, res) => {
   try {
     const videoUrl = req.query.url;
     const referer = req.query.referer || CONFIG.baseUrl + '/';
     
     if (!videoUrl) {
-      return res.status(400).json({
-        success: false,
-        error: 'URL requise'
-      });
+      return res.status(400).json({ success: false, error: 'URL requise' });
     }
     
     const response = await axios.get(videoUrl, {
@@ -1376,32 +1238,22 @@ app.get('/api/proxy/stream', async (req, res) => {
     response.data.pipe(res);
   } catch (error) {
     console.error('Erreur proxy streaming:', error.message);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Endpoint pour obtenir les infos directes d'une URL episodes.js
 app.get('/api/direct/episodes', async (req, res) => {
   try {
     const url = req.query.url;
     
     if (!url) {
-      return res.status(400).json({
-        success: false,
-        error: 'URL requise'
-      });
+      return res.status(400).json({ success: false, error: 'URL requise' });
     }
     
     const episodesData = await parseEpisodesJs(url);
     
     if (Object.keys(episodesData).length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Aucun épisode/chapitre trouvé dans ce fichier'
-      });
+      return res.status(404).json({ success: false, error: 'Aucun épisode/chapitre trouvé' });
     }
     
     const firstPlayer = Object.values(episodesData)[0];
@@ -1416,23 +1268,16 @@ app.get('/api/direct/episodes', async (req, res) => {
       data: episodesData
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Endpoint pour tester une URL
 app.get('/api/test/url', async (req, res) => {
   try {
     const url = req.query.url;
     
     if (!url) {
-      return res.status(400).json({
-        success: false,
-        error: 'URL requise'
-      });
+      return res.status(400).json({ success: false, error: 'URL requise' });
     }
     
     const exists = await checkUrlExists(url);
@@ -1444,14 +1289,10 @@ app.get('/api/test/url', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Endpoint lecteurs
 app.get('/api/players', (req, res) => {
   res.json({
     success: true,
@@ -1464,8 +1305,9 @@ app.get('/api/players', (req, res) => {
   });
 });
 
-// Endpoint statut
 app.get('/api/status', async (req, res) => {
+  await loadAnimeList();
+  
   const scansCount = animeList.filter(a => a.type === 'scan').length;
   const animesCount = animeList.filter(a => a.type === 'anime').length;
   
@@ -1473,7 +1315,6 @@ app.get('/api/status', async (req, res) => {
     success: true,
     server: {
       status: 'running',
-      port: PORT,
       uptime: process.uptime(),
       totalCount: animeList.length,
       animesCount: animesCount,
@@ -1482,26 +1323,24 @@ app.get('/api/status', async (req, res) => {
     },
     domain: {
       current: CONFIG.mainDomain,
-      baseUrl: CONFIG.baseUrl,
-      lastCheck: CONFIG.lastDomainCheck ? new Date(CONFIG.lastDomainCheck).toISOString() : null
+      baseUrl: CONFIG.baseUrl
     },
     endpoints: {
       anime: {
-        list: '/api/anime?page=1&limit=50&type=anime',
-        details: '/api/anime/:id?lang=vostfr',
-        season: '/api/anime/:id/saison/:season?lang=vostfr',
-        episode: '/api/anime/:id/saison/:season/episode/:number?lang=vostfr'
+        list: '/api/anime',
+        details: '/api/anime/:id',
+        season: '/api/anime/:id/saison/:season',
+        episode: '/api/anime/:id/saison/:season/episode/:number'
       },
       scan: {
-        list: '/api/scans?page=1&limit=50',
-        details: '/api/scan/:id?scan=scanName&lang=vostfr',
-        chapters: '/api/scan/:id/chapitres?scan=scanName',
-        chapter: '/api/scan/:id/chapitre/:number?scan=scanName'
+        list: '/api/scans',
+        details: '/api/scan/:id',
+        chapter: '/api/scan/:id/chapitre/:number'
       },
       common: {
-        search: '/api/search?q=query',
+        search: '/api/search',
         players: '/api/players',
-        proxy: '/api/proxy/stream?url=...',
+        proxy: '/api/proxy/stream',
         status: '/api/status'
       }
     }
@@ -1509,15 +1348,16 @@ app.get('/api/status', async (req, res) => {
 });
 
 // Servir la documentation HTML
+const path = require('path');
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/api.html');
+  res.sendFile(path.join(__dirname, 'api.html'));
 });
 
 app.get('/api.html', (req, res) => {
-  res.sendFile(__dirname + '/api.html');
+  res.sendFile(path.join(__dirname, 'api.html'));
 });
 
-// Middleware pour les erreurs 404
+// Middleware 404
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -1526,24 +1366,5 @@ app.use((req, res) => {
   });
 });
 
-// ==================== INITIALISATION ====================
-
-/**
- * Initialise le serveur
- */
-async function initializeServer() {
-  console.log('🚀 Initialisation du serveur...');
-  
-  await detectMainDomain();
-  await loadAnimeList();
-  
-  app.listen(PORT, () => {
-    console.log(`\n✅ Serveur API démarré sur http://localhost:${PORT}`);
-    console.log(`🌐 Domaine principal: ${CONFIG.mainDomain}`);
-    console.log(`📊 ${animeList.length} animes/scans chargés depuis GitHub`);
-    console.log(`\n📡 Documentation: http://localhost:${PORT}/`);
-  });
-}
-
-// Démarrer le serveur
-initializeServer().catch(console.error);
+// Export pour Vercel (pas de app.listen)
+module.exports = app;
