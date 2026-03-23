@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Anime Sama API - Documentation</title>
+    <meta name="description" content="API documentation for Anime Sama - streaming and scan data">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-dim: rgba(99, 102, 241, 0.1);
+            --bg: #eef0f7;
+            --surface: rgba(255, 255, 255, 0.75);
+            --surface-strong: rgba(255, 255, 255, 0.92);
+            --border: rgba(99, 102, 241, 0.18);
+            --border-strong: rgba(99, 102, 241, 0.35);
+            --text: #0f172a;
+            --text-secondary: #334155;
+            --text-muted: #64748b;
+            --green: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --radius: 18px;
+            --radius-lg: 24px;
+            --shadow-sm: 0 8px 20px -8px rgba(99, 102, 241, 0.2);
+            --shadow-hover: 0 20px 30px -12px rgba(99, 102, 241, 0.3);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* FOND ANIMÉ */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
+        }
+
+        .gradient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.35;
+            animation: float 25s infinite alternate ease-in-out;
+        }
+
+        .orb1 {
+            width: 600px;
+            height: 600px;
+            background: rgba(99, 102, 241, 0.6);
+            top: -200px;
+            left: -100px;
+            animation-duration: 20s;
+        }
+
+        .orb2 {
+            width: 500px;
+            height: 500px;
+            background: rgba(139, 92, 246, 0.5);
+            bottom: -150px;
+            right: -100px;
+            animation-duration: 28s;
+            animation-delay: -5s;
+        }
+
+        .orb3 {
+            width: 400px;
+            height: 400px;
+            background: rgba(45, 212, 191, 0.5);
+            top: 40%;
+            left: 40%;
+            animation-duration: 22s;
+            animation-delay: -2s;
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 50%;
+            animation: float-particle 15s infinite linear;
+        }
+
+        @keyframes float-particle {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.5;
+            }
+            90% {
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateY(-100px) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(80px, -60px) scale(1.3); }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* TOPBAR */
+        .topbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 64px;
+            background: rgba(30, 30, 46, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+            border-top: 3px solid var(--accent);
+            z-index: 90;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            color: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .hamburger {
+            background: transparent;
+            border: none;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            margin-right: 16px;
+        }
+        .hamburger:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+        .hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background-color: white;
+            border-radius: 2px;
+            transition: transform 0.3s ease, opacity 0.2s ease, width 0.3s ease;
+        }
+        .hamburger.open span:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+            width: 24px;
+        }
+        .hamburger.open span:nth-child(2) {
+            opacity: 0;
+            transform: scale(0);
+        }
+        .hamburger.open span:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+            width: 24px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+        .logo-mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .logo-text {
+            font-weight: 800;
+            font-size: 18px;
+            color: white;
+            background: linear-gradient(135deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-badge {
+            background: var(--accent-dim);
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        /* DRAWER */
+        .drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 100vh;
+            background: rgba(238, 240, 247, 0.98);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-right: 1px solid var(--border);
+            box-shadow: 4px 0 40px rgba(99,102,241,0.15);
+            z-index: 200;
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer.open {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 20px 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .drawer-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .drawer-logo .logo-mark {
+            width: 36px;
+            height: 36px;
+            font-size: 14px;
+        }
+        .drawer-logo span {
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--text);
+        }
+        .close-drawer {
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .close-drawer:hover {
+            color: var(--error);
+            background: rgba(239,68,68,0.1);
+            transform: rotate(90deg);
+        }
+
+        .drawer-nav {
+            flex: 1;
+            padding: 16px 12px;
+        }
+        .nav-section {
+            margin: 20px 0 8px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            cursor: pointer;
+            margin-bottom: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+        .nav-item i {
+            width: 20px;
+            font-size: 16px;
+            color: var(--accent);
+            transition: all 0.2s;
+        }
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .nav-item:hover::before {
+            left: 100%;
+        }
+        .nav-item:hover {
+            background: var(--accent-dim);
+            color: var(--accent);
+            transform: translateX(5px);
+        }
+        .nav-item:hover i {
+            transform: scale(1.2);
+        }
+        .nav-item.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .nav-item.active i {
+            color: white;
+        }
+
+        .drawer-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+        }
+        .drawer-stats {
+            display: flex;
+            justify-content: space-between;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .stat-item {
+            flex: 1;
+            transition: all 0.2s;
+        }
+        .stat-item:hover {
+            transform: translateY(-3px);
+        }
+        .stat-item .value {
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--accent);
+            display: block;
+            line-height: 1.3;
+        }
+        .stat-item .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 199;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .drawer-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .swipe-indicator {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface-strong);
+            backdrop-filter: blur(20px);
+            padding: 8px 16px;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 12px;
+            z-index: 95;
+            align-items: center;
+            gap: 8px;
+            animation: bounce-swipe 2s infinite;
+        }
+
+        @keyframes bounce-swipe {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            padding: 84px 24px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            transition: margin-left 0.3s ease;
+            position: relative;
+            z-index: 5;
+        }
+
+        .header {
+            margin-bottom: 40px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+        .header h1 {
+            font-size: 44px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+        .header p {
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+
+        .section {
+            margin-bottom: 32px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .section:nth-child(1) { animation-delay: 0.1s; }
+        .section:nth-child(2) { animation-delay: 0.2s; }
+        .section:nth-child(3) { animation-delay: 0.3s; }
+        .section:nth-child(4) { animation-delay: 0.4s; }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .section-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+        }
+        .section-header h2 i {
+            color: var(--accent);
+            font-size: 18px;
+        }
+
+        .card {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            border-color: var(--border-strong);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .endpoint-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .endpoint-card {
+            background: var(--surface-strong);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .endpoint-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-strong);
+        }
+
+        .method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .method.get { background: rgba(16, 185, 129, 0.1); color: var(--green); }
+        .method.post { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .method.put { background: rgba(99, 102, 241, 0.1); color: var(--accent); }
+        .method.delete { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
+
+        .endpoint-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .params {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .param {
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .param-name {
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .param-desc {
+            color: var(--text-muted);
+        }
+
+        .test-area {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .test-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: white;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .test-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .test-btn:hover {
+            background: #5254d4;
+            transform: translateY(-2px);
+        }
+        .test-result {
+            margin-top: 8px;
+            font-size: 11px;
+            background: var(--bg);
+            padding: 8px;
+            border-radius: 6px;
+            display: none;
+            max-height: 150px;
+            overflow: auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        .stat-card {
+            background: var(--surface-strong);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-strong);
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            display: none;
+            animation: slideUp 0.3s ease-out;
+        }
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--green);
+        }
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 84px 16px 40px;
+            }
+            .endpoint-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .swipe-indicator {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 { font-size: 32px; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg">
+        <div class="gradient-orb orb1"></div>
+        <div class="gradient-orb orb2"></div>
+        <div class="gradient-orb orb3"></div>
+    </div>
+    <div class="particles" id="particles"></div>
+
+    <header class="topbar">
+        <button class="hamburger" id="hamburgerBtn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="logo-area">
+            <div class="logo-mark">AS</div>
+            <span class="logo-text">Anime Sama API</span>
+        </div>
+        <div class="topbar-right">
+            <div class="status-badge" id="statusBadge">
+                <i class="fas fa-circle" style="font-size: 8px; margin-right: 6px; color: var(--green);"></i>
+                En ligne
+            </div>
+        </div>
+    </header>
+
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+
+    <aside class="drawer" id="drawer">
+        <div class="drawer-header">
+            <div class="drawer-logo">
+                <div class="logo-mark">AS</div>
+                <span>Documentation</span>
+            </div>
+            <button class="close-drawer" id="closeDrawerBtn">&times;</button>
+        </div>
+
+        <nav class="drawer-nav">
+            <div class="nav-section">NAVIGATION</div>
+            <a href="#" class="nav-item active" data-section="overview">
+                <i class="fas fa-home"></i>
+                <span>Aperçu</span>
+            </a>
+            <a href="#" class="nav-item" data-section="anime">
+                <i class="fas fa-tv"></i>
+                <span>Anime</span>
+            </a>
+            <a href="#" class="nav-item" data-section="scan">
+                <i class="fas fa-book"></i>
+                <span>Scan</span>
+            </a>
+            <a href="#" class="nav-item" data-section="utils">
+                <i class="fas fa-tools"></i>
+                <span>Utilitaires</span>
+            </a>
+            <a href="#" class="nav-item" data-section="status">
+                <i class="fas fa-chart-line"></i>
+                <span>Statut</span>
+            </a>
+        </nav>
+
+        <div class="drawer-footer">
+            <div class="drawer-stats" id="drawerStats">
+                <div class="stat-item">
+                    <span class="value" id="statAnimes">-</span>
+                    <span class="label">Animes</span>
+                </div>
+                <div class="stat-item">
+                    <span class="value" id="statScans">-</span>
+                    <span class="label">Scans</span>
+                </div>
+                <div class="stat-item">
+                    <span class="value" id="statPlayers">-</span>
+                    <span class="label">Lecteurs</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="swipe-indicator" id="swipeIndicator">
+        <i class="fas fa-chevron-right"></i>
+        <span>Glissez pour ouvrir le menu</span>
+        <i class="fas fa-chevron-left"></i>
+    </div>
+
+    <main class="main-content" id="mainContent">
+        <div id="global-alert" class="alert"></div>
+
+        <div class="header" id="overview-section">
+            <h1>Anime Sama API</h1>
+            <p>API non officielle pour récupérer les épisodes et scans d'Anime Sama</p>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="section" id="stats-section">
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalAnimes">-</div>
+                    <div class="stat-label">Animes disponibles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalScans">-</div>
+                    <div class="stat-label">Scans disponibles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalPlayers">-</div>
+                    <div class="stat-label">Lecteurs supportés</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="domainStatus">-</div>
+                    <div class="stat-label">Domaine actif</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Anime -->
+        <div class="section" id="anime-section" style="display: none;">
+            <div class="section-header">
+                <h2><i class="fas fa-tv"></i> Endpoints Anime</h2>
+            </div>
+            <div class="endpoint-grid" id="animeEndpoints"></div>
+        </div>
+
+        <!-- Section Scan -->
+        <div class="section" id="scan-section" style="display: none;">
+            <div class="section-header">
+                <h2><i class="fas fa-book"></i> Endpoints Scan</h2>
+            </div>
+            <div class="endpoint-grid" id="scanEndpoints"></div>
+        </div>
+
+        <!-- Section Utilitaires -->
+        <div class="section" id="utils-section" style="display: none;">
+            <div class="section-header">
+                <h2><i class="fas fa-tools"></i> Utilitaires</h2>
+            </div>
+            <div class="endpoint-grid" id="utilsEndpoints"></div>
+        </div>
+
+        <!-- Section Statut -->
+        <div class="section" id="status-section" style="display: none;">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-line"></i> Statut du serveur</h2>
+            </div>
+            <div class="card" id="serverStatus">
+                <div style="text-align: center; padding: 20px;">
+                    <div class="loading"></div>
+                    <p style="margin-top: 12px;">Chargement des informations...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentDomain = null;
+        let animeCount = 0;
+        let scanCount = 0;
+
+        // Création des particules
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                particle.style.opacity = Math.random() * 0.5;
+                particle.style.width = (2 + Math.random() * 4) + 'px';
+                particle.style.height = particle.style.width;
+                container.appendChild(particle);
+            }
+        }
+
+        // Drawer functions
+        function toggleSidebar() {
+            const drawer = document.getElementById('drawer');
+            const overlay = document.getElementById('drawerOverlay');
+            const hamburger = document.getElementById('hamburgerBtn');
+            
+            if (drawer.classList.contains('open')) {
+                drawer.classList.remove('open');
+                overlay.classList.remove('active');
+                hamburger.classList.remove('open');
+                document.body.style.overflow = '';
+            } else {
+                drawer.classList.add('open');
+                overlay.classList.add('active');
+                hamburger.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeSidebar() {
+            document.getElementById('drawer').classList.remove('open');
+            document.getElementById('drawerOverlay').classList.remove('active');
+            document.getElementById('hamburgerBtn').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // Navigation
+        function navigateTo(section) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelector(`.nav-item[data-section="${section}"]`).classList.add('active');
+            
+            document.getElementById('overview-section').style.display = section === 'overview' ? 'block' : 'none';
+            document.getElementById('anime-section').style.display = section === 'anime' ? 'block' : 'none';
+            document.getElementById('scan-section').style.display = section === 'scan' ? 'block' : 'none';
+            document.getElementById('utils-section').style.display = section === 'utils' ? 'block' : 'none';
+            document.getElementById('status-section').style.display = section === 'status' ? 'block' : 'none';
+            
+            closeSidebar();
+        }
+
+        // Affichage des alertes
+        function showAlert(message, type) {
+            const alert = document.getElementById('global-alert');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            setTimeout(() => alert.style.display = 'none', 5000);
+        }
+
+        // Test d'endpoint
+        async function testEndpoint(endpoint, method = 'GET') {
+            const testResult = document.getElementById(`result-${endpoint.replace(/\//g, '-')}`);
+            if (testResult) {
+                testResult.style.display = 'block';
+                testResult.innerHTML = '<div class="loading"></div> Chargement...';
+                
+                try {
+                    let url = API_BASE + endpoint;
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    testResult.innerHTML = `<pre style="margin:0; font-size:11px; white-space:pre-wrap;">${JSON.stringify(data, null, 2)}</pre>`;
+                } catch (error) {
+                    testResult.innerHTML = `<span style="color: var(--error);">Erreur: ${error.message}</span>`;
+                }
+            }
+        }
+
+        // Chargement du statut
+        async function loadStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/status`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('serverStatus').innerHTML = `
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">${data.server.totalCount}</div>
+                                <div class="stat-label">Total animes/scans</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${data.server.animesCount}</div>
+                                <div class="stat-label">Animes</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${data.server.scansCount}</div>
+                                <div class="stat-label">Scans</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${Math.floor(data.server.uptime / 60)}</div>
+                                <div class="stat-label">Uptime (min)</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <div class="info-item" style="padding: 12px; background: var(--surface-strong); border-radius: var(--radius);">
+                                <div class="info-label">Domaine actuel</div>
+                                <div class="info-value">${data.domain.current}</div>
+                            </div>
+                            <div class="info-item" style="padding: 12px; background: var(--surface-strong); border-radius: var(--radius); margin-top: 12px;">
+                                <div class="info-label">Base URL</div>
+                                <div class="info-value">${data.domain.baseUrl}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('serverStatus').innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: var(--error); margin-bottom: 16px;"></i>
+                        <p>Erreur de connexion au serveur</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Chargement des stats
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/status`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    animeCount = data.server.animesCount;
+                    scanCount = data.server.scansCount;
+                    currentDomain = data.domain.current;
+                    
+                    document.getElementById('totalAnimes').textContent = animeCount;
+                    document.getElementById('totalScans').textContent = scanCount;
+                    document.getElementById('totalPlayers').textContent = '25+';
+                    document.getElementById('domainStatus').textContent = data.domain.current.split('.')[0];
+                    
+                    document.getElementById('statAnimes').textContent = animeCount;
+                    document.getElementById('statScans').textContent = scanCount;
+                    document.getElementById('statPlayers').textContent = '25+';
+                }
+            } catch (error) {
+                console.error('Erreur chargement stats:', error);
+            }
+        }
+
+        // Endpoints
+        const animeEndpoints = [
+            { method: 'GET', url: '/api/anime', desc: 'Liste tous les animes et scans', params: [{ name: 'page', desc: 'Numéro de page (défaut: 1)' }, { name: 'limit', desc: 'Résultats par page (défaut: 50)' }, { name: 'type', desc: 'Filtrer par type: anime ou scan' }, { name: 'search', desc: 'Recherche par titre' }] },
+            { method: 'GET', url: '/api/anime/:id', desc: 'Détails d\'un anime (saisons et scans)', params: [{ name: 'id', desc: 'Nom de l\'anime' }, { name: 'lang', desc: 'Langue: vf ou vostfr (défaut: vostfr)' }] },
+            { method: 'GET', url: '/api/anime/:id/saison/:season', desc: 'Détails d\'une saison spécifique', params: [{ name: 'id', desc: 'Nom de l\'anime' }, { name: 'season', desc: 'Numéro de saison (ex: 1, 1hs)' }, { name: 'lang', desc: 'Langue' }] },
+            { method: 'GET', url: '/api/anime/:id/saison/:season/episode/:number', desc: 'Récupère un épisode spécifique', params: [{ name: 'id', desc: 'Nom de l\'anime' }, { name: 'season', desc: 'Numéro de saison' }, { name: 'number', desc: 'Numéro d\'épisode' }, { name: 'player', desc: 'Filtrer par lecteur' }] }
+        ];
+
+        const scanEndpoints = [
+            { method: 'GET', url: '/api/scans', desc: 'Liste tous les scans disponibles', params: [{ name: 'page', desc: 'Numéro de page' }, { name: 'lang', desc: 'Langue' }, { name: 'search', desc: 'Recherche' }] },
+            { method: 'GET', url: '/api/scan/:id', desc: 'Détails d\'un scan', params: [{ name: 'id', desc: 'Nom du manga' }, { name: 'scan', desc: 'Nom du scan (défaut: scan)' }, { name: 'lang', desc: 'Langue' }] },
+            { method: 'GET', url: '/api/scan/:id/chapitre/:number', desc: 'Récupère un chapitre spécifique', params: [{ name: 'id', desc: 'Nom du manga' }, { name: 'number', desc: 'Numéro de chapitre' }, { name: 'scan', desc: 'Nom du scan' }, { name: 'volume', desc: 'Filtrer par volume' }] },
+            { method: 'GET', url: '/api/anime/:id/scans', desc: 'Liste tous les scans d\'un anime', params: [{ name: 'id', desc: 'Nom de l\'anime' }, { name: 'lang', desc: 'Langue' }] }
+        ];
+
+        const utilsEndpoints = [
+            { method: 'GET', url: '/api/search', desc: 'Recherche dans la base', params: [{ name: 'q', desc: 'Terme de recherche (min 2 caractères)' }, { name: 'type', desc: 'anime ou scan' }] },
+            { method: 'GET', url: '/api/players', desc: 'Liste des lecteurs supportés', params: [] },
+            { method: 'GET', url: '/api/status', desc: 'Statut du serveur', params: [] },
+            { method: 'GET', url: '/api/domain/update', desc: 'Met à jour le domaine principal', params: [] },
+            { method: 'GET', url: '/api/proxy/stream', desc: 'Proxy pour le streaming', params: [{ name: 'url', desc: 'URL de la vidéo' }, { name: 'referer', desc: 'Referer (optionnel)' }] },
+            { method: 'GET', url: '/api/test/url', desc: 'Teste si une URL existe', params: [{ name: 'url', desc: 'URL à tester' }] }
+        ];
+
+        function renderEndpoints(containerId, endpoints) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = endpoints.map(ep => `
+                <div class="endpoint-card">
+                    <span class="method ${ep.method.toLowerCase()}">${ep.method}</span>
+                    <div class="endpoint-url">${ep.url}</div>
+                    <div class="endpoint-desc">${ep.desc}</div>
+                    ${ep.params.length ? `
+                        <div class="params">
+                            <strong>Paramètres:</strong>
+                            ${ep.params.map(p => `
+                                <div class="param">
+                                    <span class="param-name">${p.name}</span> - 
+                                    <span class="param-desc">${p.desc}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    <div class="test-area">
+                        <input type="text" class="test-input" id="input-${ep.url.replace(/\//g, '-')}" placeholder="Remplacer :id, :season, etc." value="${ep.url.includes(':') ? 'naruto-shippuden' : ''}">
+                        <button class="test-btn" onclick="testEndpoint('${ep.url}', '${ep.method}')">Tester</button>
+                        <div id="result-${ep.url.replace(/\//g, '-')}" class="test-result"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Swipe pour mobile
+        function initSwipe() {
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            document.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+            
+            document.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                const drawer = document.getElementById('drawer');
+                if (touchEndX - touchStartX > 50 && !drawer.classList.contains('open')) {
+                    toggleSidebar();
+                } else if (touchStartX - touchEndX > 50 && drawer.classList.contains('open')) {
+                    closeSidebar();
+                }
+            });
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            initSwipe();
+            
+            document.getElementById('hamburgerBtn').addEventListener('click', toggleSidebar);
+            document.getElementById('closeDrawerBtn').addEventListener('click', closeSidebar);
+            document.getElementById('drawerOverlay').addEventListener('click', closeSidebar);
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigateTo(item.dataset.section);
+                });
+            });
+            
+            window.testEndpoint = testEndpoint;
+            
+            renderEndpoints('animeEndpoints', animeEndpoints);
+            renderEndpoints('scanEndpoints', scanEndpoints);
+            renderEndpoints('utilsEndpoints', utilsEndpoints);
+            
+            loadStats();
+            loadStatus();
+            
+            setTimeout(() => {
+                const swipeIndicator = document.getElementById('swipeIndicator');
+                if (swipeIndicator) {
+                    swipeIndicator.style.opacity = '0';
+                    setTimeout(() => swipeIndicator.style.display = 'none', 1000);
+                }
+            }, 3000);
+            
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeSidebar();
+            });
+        });
+    </script>
+</body>
+</html>
