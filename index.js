@@ -2,6 +2,8 @@ const express = require('express');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -1330,7 +1332,14 @@ app.get('/api/status', async (req, res) => {
 
 // Route racine - Page de documentation API
 app.get('/', (req, res) => {
-  res.sendFile('api.html', { root: __dirname });
+  try {
+    const htmlPath = path.resolve(__dirname, 'api.html');
+    const html = fs.readFileSync(htmlPath, 'utf8');
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (e) {
+    res.status(500).json({ error: 'api.html introuvable', detail: e.message });
+  }
 });
 
 // Middleware 404
