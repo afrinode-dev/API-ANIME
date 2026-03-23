@@ -1328,36 +1328,9 @@ app.get('/api/status', async (req, res) => {
   });
 });
 
-// Route racine - Documentation JSON
+// Route racine - Page de documentation API
 app.get('/', (req, res) => {
-  res.json({
-    name: 'Anime-Sama API',
-    version: '1.0.0',
-    status: 'running',
-    endpoints: {
-      status: '/api/status',
-      search: '/api/search?q=naruto',
-      anime: {
-        list: '/api/anime',
-        details: '/api/anime/:id',
-        season: '/api/anime/:id/saison/:season',
-        episode: '/api/anime/:id/saison/:season/episode/:number',
-        scans: '/api/anime/:id/scans'
-      },
-      scan: {
-        list: '/api/scans',
-        details: '/api/scan/:id',
-        chapter: '/api/scan/:id/chapitre/:number'
-      },
-      tools: {
-        players: '/api/players',
-        testUrl: '/api/test/url?url=...',
-        directEpisodes: '/api/direct/episodes?url=...',
-        proxy: '/api/proxy/stream?url=...',
-        domainUpdate: '/api/domain/update'
-      }
-    }
-  });
+  res.sendFile('api.html', { root: __dirname });
 });
 
 // Middleware 404
