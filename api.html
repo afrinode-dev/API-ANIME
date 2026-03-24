@@ -443,7 +443,7 @@
 
         .endpoint-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
             gap: 20px;
         }
 
@@ -469,7 +469,6 @@
             margin-bottom: 12px;
         }
         .method.get { background: rgba(16, 185, 129, 0.1); color: var(--green); }
-        .method.post { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
 
         .endpoint-url {
             font-family: 'Courier New', monospace;
@@ -505,6 +504,12 @@
             padding-top: 12px;
             border-top: 1px solid var(--border);
         }
+        .test-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
         .test-input {
             width: 100%;
             padding: 8px 12px;
@@ -512,7 +517,14 @@
             border: 1px solid var(--border);
             background: white;
             font-size: 12px;
-            margin-bottom: 8px;
+        }
+        .test-input-sm {
+            width: 100%;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: white;
+            font-size: 11px;
         }
         .test-btn {
             padding: 6px 12px;
@@ -535,8 +547,13 @@
             padding: 8px;
             border-radius: 6px;
             display: none;
-            max-height: 200px;
+            max-height: 300px;
             overflow: auto;
+        }
+        .test-result pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
 
         .stats-grid {
@@ -643,70 +660,135 @@
     <script>
         const API_BASE = window.location.origin;
 
+        // Exemples de slugs valides
+        const EXAMPLES = {
+            'jujutsu-kaisen': 'jujutsu-kaisen',
+            'solo-leveling': 'solo-leveling',
+            'naruto': 'naruto',
+            'one-piece': 'one-piece',
+            'demon-slayer': 'demon-slayer'
+        };
+
         // Endpoints complets correspondant à index.js
         const animeEndpoints = [
-            { method: 'GET', url: '/api/anime', desc: 'Liste tous les animes et scans (pagination, filtre type, recherche)', params: [{ name: 'page', desc: 'Page (défaut 1)' }, { name: 'limit', desc: 'Par page (défaut 50)' }, { name: 'type', desc: 'anime ou scan' }, { name: 'search', desc: 'Recherche par titre' }] },
-            { method: 'GET', url: '/api/anime/:id', desc: 'Détails d\'un anime (saisons disponibles, scans associés)', params: [{ name: 'id', desc: 'Nom de l\'anime (ex: naruto-shippuden)' }, { name: 'lang', desc: 'vf ou vostfr (défaut vostfr)' }] },
-            { method: 'GET', url: '/api/anime/:id/saison/:season', desc: 'Liste des épisodes d\'une saison', params: [{ name: 'id', desc: 'Nom anime' }, { name: 'season', desc: 'Numéro saison (1, 2, 1hs)' }, { name: 'lang', desc: 'Langue' }] },
-            { method: 'GET', url: '/api/anime/:id/saison/:season/episode/:number', desc: 'URLs d\'un épisode spécifique (tous lecteurs)', params: [{ name: 'id', desc: 'Nom anime' }, { name: 'season', desc: 'Saison' }, { name: 'number', desc: 'Numéro épisode' }, { name: 'player', desc: 'Filtrer par lecteur (optionnel)' }] },
-            { method: 'GET', url: '/api/anime/:id/scans', desc: 'Liste des scans disponibles pour un anime', params: [{ name: 'id', desc: 'Nom anime' }, { name: 'lang', desc: 'Langue' }] }
+            { method: 'GET', url: '/api/anime', desc: 'Liste tous les animes et scans (pagination, filtre type, recherche)', params: [{ name: 'page', desc: 'Page (défaut 1)' }, { name: 'limit', desc: 'Par page (défaut 50)' }, { name: 'type', desc: 'anime ou scan' }, { name: 'search', desc: 'Recherche par titre' }], defaultValues: {} },
+            { method: 'GET', url: '/api/anime/:id', desc: 'Détails d\'un anime (saisons disponibles, scans associés)', params: [{ name: 'id', desc: 'Nom de l\'anime (ex: jujutsu-kaisen, solo-leveling)' }, { name: 'lang', desc: 'vf ou vostfr (défaut vostfr)' }], defaultValues: { id: 'jujutsu-kaisen' } },
+            { method: 'GET', url: '/api/anime/:id/saison/:season', desc: 'Liste des épisodes d\'une saison (saison3, saison3-2, film, oav)', params: [{ name: 'id', desc: 'Nom anime' }, { name: 'season', desc: 'Saison (ex: saison1, saison3-2, film, oav)' }, { name: 'lang', desc: 'Langue' }], defaultValues: { id: 'jujutsu-kaisen', season: 'saison1' } },
+            { method: 'GET', url: '/api/anime/:id/saison/:season/episode/:number', desc: 'URLs d\'un épisode spécifique (tous lecteurs)', params: [{ name: 'id', desc: 'Nom anime' }, { name: 'season', desc: 'Saison' }, { name: 'number', desc: 'Numéro épisode' }, { name: 'player', desc: 'Filtrer par lecteur (optionnel)' }], defaultValues: { id: 'jujutsu-kaisen', season: 'saison1', number: '1' } },
+            { method: 'GET', url: '/api/anime/:id/scans', desc: 'Liste des scans disponibles pour un anime', params: [{ name: 'id', desc: 'Nom anime' }, { name: 'lang', desc: 'Langue' }], defaultValues: { id: 'solo-leveling' } }
         ];
 
         const scanEndpoints = [
-            { method: 'GET', url: '/api/scans', desc: 'Liste tous les scans (groupés par manga)', params: [{ name: 'page', desc: 'Page' }, { name: 'lang', desc: 'vf/vostfr' }, { name: 'search', desc: 'Recherche' }] },
-            { method: 'GET', url: '/api/scan/:id', desc: 'Détails d\'un scan (volumes et chapitres)', params: [{ name: 'id', desc: 'Nom du manga' }, { name: 'scan', desc: 'scan / scan-side-story / etc' }, { name: 'lang', desc: 'Langue' }] },
-            { method: 'GET', url: '/api/scan/:id/chapitre/:number', desc: 'URL du chapitre demandé', params: [{ name: 'id', desc: 'Nom manga' }, { name: 'number', desc: 'Numéro chapitre' }, { name: 'scan', desc: 'Type de scan' }, { name: 'volume', desc: 'Filtrer par volume' }] }
+            { method: 'GET', url: '/api/scans', desc: 'Liste tous les scans (groupés par manga)', params: [{ name: 'page', desc: 'Page' }, { name: 'lang', desc: 'vf/vostfr' }, { name: 'search', desc: 'Recherche' }], defaultValues: {} },
+            { method: 'GET', url: '/api/scan/:id', desc: 'Détails d\'un scan (volumes et chapitres)', params: [{ name: 'id', desc: 'Nom du manga' }, { name: 'scan', desc: 'main / side_story / ragnarok / arise / modulo' }, { name: 'lang', desc: 'Langue' }], defaultValues: { id: 'solo-leveling', scan: 'main' } },
+            { method: 'GET', url: '/api/scan/:id/chapitre/:number', desc: 'URL du chapitre demandé', params: [{ name: 'id', desc: 'Nom manga' }, { name: 'number', desc: 'Numéro chapitre' }, { name: 'scan', desc: 'Type de scan' }, { name: 'volume', desc: 'Filtrer par volume' }], defaultValues: { id: 'solo-leveling', number: '1', scan: 'main' } }
         ];
 
         const utilsEndpoints = [
-            { method: 'GET', url: '/api/search', desc: 'Recherche globale', params: [{ name: 'q', desc: 'Terme (min 2 caractères)' }, { name: 'type', desc: 'anime/scan' }, { name: 'limit', desc: 'Max résultats' }] },
-            { method: 'GET', url: '/api/players', desc: 'Liste des lecteurs supportés (vidéo et scan)', params: [] },
-            { method: 'GET', url: '/api/status', desc: 'Statut complet du serveur (domaine, compteurs)', params: [] },
-            { method: 'GET', url: '/api/domain/update', desc: 'Force la détection du domaine principal', params: [] },
-            { method: 'GET', url: '/api/proxy/stream', desc: 'Proxy pour stream vidéo (CORS)', params: [{ name: 'url', desc: 'URL de la vidéo' }, { name: 'referer', desc: 'Referer optionnel' }] },
-            { method: 'GET', url: '/api/test/url', desc: 'Teste disponibilité d\'une URL', params: [{ name: 'url', desc: 'URL à tester' }] },
-            { method: 'GET', url: '/api/direct/episodes', desc: 'Parse direct un fichier episodes.js', params: [{ name: 'url', desc: 'URL du fichier episodes.js' }] }
+            { method: 'GET', url: '/api/search', desc: 'Recherche globale', params: [{ name: 'q', desc: 'Terme (min 2 caractères)' }, { name: 'type', desc: 'anime/scan' }, { name: 'limit', desc: 'Max résultats' }], defaultValues: { q: 'jujutsu' } },
+            { method: 'GET', url: '/api/players', desc: 'Liste des lecteurs supportés (vidéo et scan)', params: [], defaultValues: {} },
+            { method: 'GET', url: '/api/status', desc: 'Statut complet du serveur (domaine, compteurs)', params: [], defaultValues: {} },
+            { method: 'GET', url: '/api/domain/update', desc: 'Force la détection du domaine principal', params: [], defaultValues: {} },
+            { method: 'GET', url: '/api/proxy/stream', desc: 'Proxy pour stream vidéo (CORS)', params: [{ name: 'url', desc: 'URL de la vidéo' }, { name: 'referer', desc: 'Referer optionnel' }], defaultValues: { url: '' } },
+            { method: 'GET', url: '/api/test/url', desc: 'Teste disponibilité d\'une URL', params: [{ name: 'url', desc: 'URL à tester' }], defaultValues: { url: 'https://anime-sama.to' } },
+            { method: 'GET', url: '/api/direct/episodes', desc: 'Parse direct un fichier episodes.js', params: [{ name: 'url', desc: 'URL du fichier episodes.js' }], defaultValues: { url: '' } }
         ];
 
-        function renderEndpoints(containerId, endpoints) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            container.innerHTML = endpoints.map(ep => `
-                <div class="endpoint-card">
-                    <span class="method ${ep.method.toLowerCase()}">${ep.method}</span>
-                    <div class="endpoint-url">${ep.url}</div>
-                    <div class="endpoint-desc">${ep.desc}</div>
-                    ${ep.params.length ? `<div class="params"><strong>Paramètres:</strong>${ep.params.map(p => `<div class="param"><span class="param-name">${p.name}</span> - ${p.desc}</div>`).join('')}</div>` : ''}
-                    <div class="test-area">
-                        <input type="text" class="test-input" id="input-${ep.url.replace(/[\/:]/g, '-')}" placeholder="Remplacer :id, :season, etc." value="${ep.url.includes(':id') ? 'naruto-shippuden' : ''}">
-                        <button class="test-btn" onclick="testEndpoint('${ep.url}', '${ep.method}')">Tester</button>
-                        <div id="result-${ep.url.replace(/[\/:]/g, '-')}" class="test-result"></div>
-                    </div>
-                </div>
-            `).join('');
+        function buildUrl(endpoint, values) {
+            let url = endpoint;
+            // Remplacer les paramètres dynamiques
+            for (const [key, val] of Object.entries(values)) {
+                if (val && url.includes(`:${key}`)) {
+                    url = url.replace(`:${key}`, encodeURIComponent(val));
+                }
+            }
+            // Ajouter les query params (ceux qui ne sont pas des paramètres dynamiques)
+            const queryParams = [];
+            for (const [key, val] of Object.entries(values)) {
+                if (val && !endpoint.includes(`:${key}`)) {
+                    queryParams.push(`${key}=${encodeURIComponent(val)}`);
+                }
+            }
+            if (queryParams.length > 0) {
+                url += (url.includes('?') ? '&' : '?') + queryParams.join('&');
+            }
+            return url;
         }
 
-        window.testEndpoint = async function(endpoint, method) {
-            const inputId = `input-${endpoint.replace(/[\/:]/g, '-')}`;
-            const input = document.getElementById(inputId);
-            let url = endpoint;
-            if (input && input.value && url.includes(':')) {
-                url = url.replace(/:id/g, input.value).replace(/:season/g, '1').replace(/:number/g, '1').replace(/:scan/g, 'scan');
+        function renderEndpointCard(ep, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            // Créer les champs d'input pour chaque paramètre
+            const inputFields = ep.params.map(param => {
+                const defaultValue = ep.defaultValues?.[param.name] || '';
+                return `
+                    <div style="margin-bottom: 6px;">
+                        <span class="param-name">${param.name}</span>
+                        <input type="text" class="test-input-sm" id="input-${ep.url.replace(/[\/:]/g, '-')}-${param.name}" 
+                               placeholder="${param.desc}" value="${defaultValue}">
+                    </div>
+                `;
+            }).join('');
+
+            const card = document.createElement('div');
+            card.className = 'endpoint-card';
+            card.innerHTML = `
+                <span class="method ${ep.method.toLowerCase()}">${ep.method}</span>
+                <div class="endpoint-url">${ep.url}</div>
+                <div class="endpoint-desc">${ep.desc}</div>
+                ${ep.params.length ? `<div class="params"><strong>Paramètres:</strong></div>` : ''}
+                <div class="test-area">
+                    <div class="test-input-group">
+                        ${inputFields}
+                        <button class="test-btn" onclick="testEndpoint('${ep.url}', ${JSON.stringify(ep.params.map(p => p.name))})">Tester l'endpoint</button>
+                    </div>
+                    <div id="result-${ep.url.replace(/[\/:]/g, '-')}" class="test-result"></div>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+
+        window.testEndpoint = async function(endpointUrl, paramNames) {
+            // Récupérer toutes les valeurs des inputs
+            const values = {};
+            for (const paramName of paramNames) {
+                const input = document.getElementById(`input-${endpointUrl.replace(/[\/:]/g, '-')}-${paramName}`);
+                if (input && input.value) {
+                    values[paramName] = input.value;
+                }
             }
-            const fullUrl = API_BASE + url;
-            const resultDiv = document.getElementById(`result-${endpoint.replace(/[\/:]/g, '-')}`);
+
+            const fullUrl = API_BASE + buildUrl(endpointUrl, values);
+            const resultDiv = document.getElementById(`result-${endpointUrl.replace(/[\/:]/g, '-')}`);
+            
             if (resultDiv) {
                 resultDiv.style.display = 'block';
                 resultDiv.innerHTML = '<div class="loading"></div> Chargement...';
                 try {
                     const res = await fetch(fullUrl);
                     const data = await res.json();
-                    resultDiv.innerHTML = `<pre style="margin:0; font-size:11px; white-space:pre-wrap; overflow:auto;">${JSON.stringify(data, null, 2)}</pre>`;
+                    resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    
+                    // Afficher un message d'erreur si la réponse contient une erreur
+                    if (!data.success && data.error) {
+                        resultDiv.style.borderLeft = '3px solid var(--error)';
+                    } else {
+                        resultDiv.style.borderLeft = '3px solid var(--green)';
+                    }
                 } catch (err) {
                     resultDiv.innerHTML = `<span style="color:var(--error);">Erreur: ${err.message}</span>`;
+                    resultDiv.style.borderLeft = '3px solid var(--error)';
                 }
             }
         };
+
+        function renderEndpoints(containerId, endpoints) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            endpoints.forEach(ep => renderEndpointCard(ep, containerId));
+        }
 
         async function loadGlobalStats() {
             try {
@@ -715,11 +797,11 @@
                 if (data.success) {
                     document.getElementById('totalAnimes').innerText = data.server.animesCount || 0;
                     document.getElementById('totalScans').innerText = data.server.scansCount || 0;
-                    document.getElementById('totalPlayers').innerText = '25+';
-                    document.getElementById('domainStatus').innerText = data.domain.current.split('.')[0] || 'anime-sama';
+                    document.getElementById('totalPlayers').innerText = Object.keys(data.players || {}).length || '25';
+                    document.getElementById('domainStatus').innerText = data.domain.current?.split('.')[0] || 'anime-sama';
                     document.getElementById('statAnimes').innerText = data.server.animesCount || 0;
                     document.getElementById('statScans').innerText = data.server.scansCount || 0;
-                    document.getElementById('statPlayers').innerText = '25+';
+                    document.getElementById('statPlayers').innerText = Object.keys(data.players || {}).length || '25';
                 }
             } catch(e) { console.warn(e); }
         }
@@ -741,10 +823,17 @@
                             <div><strong>Base URL:</strong> ${data.domain.baseUrl}</div>
                             <div><strong>Dernière MAJ:</strong> ${new Date(data.server.timestamp).toLocaleString()}</div>
                         </div>
+                        <div style="margin-top:20px;">
+                            <h3 style="margin-bottom:12px;">Lecteurs supportés</h3>
+                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                ${Object.keys(data.players || {}).slice(0, 15).map(p => `<span style="background:var(--accent-dim); padding:4px 10px; border-radius:20px; font-size:11px;">${p}</span>`).join('')}
+                                ${Object.keys(data.players || {}).length > 15 ? `<span style="background:var(--accent-dim); padding:4px 10px; border-radius:20px; font-size:11px;">+${Object.keys(data.players).length - 15}</span>` : ''}
+                            </div>
+                        </div>
                     `;
                 }
             } catch(e) {
-                document.getElementById('serverStatus').innerHTML = `<div style="text-align:center;padding:40px;"><i class="fas fa-exclamation-triangle" style="font-size:48px;color:var(--error);"></i><p>Erreur connexion serveur</p></div>`;
+                document.getElementById('serverStatus').innerHTML = `<div style="text-align:center;padding:40px;"><i class="fas fa-exclamation-triangle" style="font-size:48px;color:var(--error);"></i><p>Erreur connexion serveur</p><p style="font-size:12px;margin-top:8px;">${e.message}</p></div>`;
             }
         }
 
