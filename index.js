@@ -49,7 +49,7 @@ const playerTypes = {
   'ok.ru': 'OK.ru'
 };
 
-// Types de scans
+// Types de scans (pour l'affichage)
 const scanTypes = {
   'scan': 'Scan Principal',
   'scan-manga': 'Manga',
@@ -76,26 +76,19 @@ async function detectMainDomain() {
     let mainDomainUrl = null;
 
     // Méthode 1: Rechercher le tableau "Statut des domaines"
-    // Chercher les lignes du tableau qui contiennent des domaines anime-sama
     const domainPattern = /anime-sama\.[a-z]+/g;
-    const foundDomains = new Map(); // domain -> status code
+    const foundDomains = new Map();
 
-    // Parcourir toutes les cellules du tableau
     $('td').each((i, element) => {
       const text = $(element).text().trim();
-      // Chercher un domaine dans le texte
       const domainMatch = text.match(/anime-sama\.[a-z]+/);
       if (domainMatch) {
         const domain = domainMatch[0];
-        // Chercher le statut dans les cellules voisines ou la même ligne
         const row = $(element).closest('tr');
         const rowText = row.text();
-        
-        // Extraire le code de statut (200, 302, etc.)
         const statusMatch = rowText.match(/\((\d{3})\)/);
         const statusCode = statusMatch ? parseInt(statusMatch[1]) : null;
-        
-        // Vérifier si c'est un statut OK ou redirection valide
+
         if (statusCode === 200 || statusCode === 302 || statusCode === 301) {
           if (!foundDomains.has(domain)) {
             foundDomains.set(domain, statusCode);
@@ -112,14 +105,13 @@ async function detectMainDomain() {
         if (domainMatch) {
           const domain = domainMatch[1];
           if (!foundDomains.has(domain)) {
-            // Tester si le domaine répond
             foundDomains.set(domain, null);
           }
         }
       }
     });
 
-    // Méthode 3: Chercher dans le texte "Domaine principal" ou "Statut"
+    // Méthode 3: Chercher dans le texte "domaine principal"
     $('p, div, span').each((i, element) => {
       const text = $(element).text();
       if (text.includes('domaine principal') || text.includes('Nom de domaine principal')) {
@@ -133,18 +125,15 @@ async function detectMainDomain() {
       }
     });
 
-    // Tester chaque domaine trouvé pour voir s'il est accessible
-    const testedDomains = [];
+    // Tester chaque domaine trouvé
     for (const [domain, statusFromTable] of foundDomains) {
       if (statusFromTable === 200) {
-        // Si déjà marqué comme 200 dans le tableau, c'est probablement le bon
         mainDomain = domain;
         mainDomainUrl = `https://${domain}`;
         console.log(`✅ Domaine trouvé via tableau: ${domain}`);
         break;
       }
-      
-      // Tester le domaine
+
       try {
         const testUrl = `https://${domain}`;
         const testResponse = await axios.get(testUrl, {
@@ -152,13 +141,11 @@ async function detectMainDomain() {
           timeout: 5000,
           maxRedirects: 5
         });
-        
+
         const finalUrl = testResponse.request.res.responseUrl || testUrl;
         const finalDomainMatch = finalUrl.match(/https?:\/\/([^\/]+)/);
         const finalDomain = finalDomainMatch ? finalDomainMatch[1] : domain;
-        
-        testedDomains.push({ domain: finalDomain, status: testResponse.status });
-        
+
         if (testResponse.status === 200) {
           mainDomain = finalDomain;
           mainDomainUrl = finalUrl;
@@ -166,14 +153,13 @@ async function detectMainDomain() {
           break;
         }
       } catch (error) {
-        // Ignorer les erreurs, continuer avec le prochain domaine
+        // Ignorer les erreurs
       }
     }
 
-    // Si aucun domaine n'a été trouvé, utiliser la liste de secours
+    // Fallback
     if (!mainDomain) {
       const fallbackDomains = ['anime-sama.to', 'anime-sama.si', 'anime-sama.tv'];
-      
       for (const domain of fallbackDomains) {
         try {
           const testUrl = `https://${domain}`;
@@ -182,11 +168,11 @@ async function detectMainDomain() {
             timeout: 5000,
             maxRedirects: 5
           });
-          
+
           const finalUrl = testResponse.request.res.responseUrl || testUrl;
           const finalDomainMatch = finalUrl.match(/https?:\/\/([^\/]+)/);
           const finalDomain = finalDomainMatch ? finalDomainMatch[1] : domain;
-          
+
           if (testResponse.status === 200 || testResponse.status === 302) {
             mainDomain = finalDomain;
             mainDomainUrl = finalUrl;
@@ -199,7 +185,6 @@ async function detectMainDomain() {
       }
     }
 
-    // Dernier recours: utiliser le domaine par défaut
     if (!mainDomain) {
       mainDomain = CONFIG.currentDomain;
       mainDomainUrl = `https://${CONFIG.currentDomain}`;
@@ -208,10 +193,9 @@ async function detectMainDomain() {
 
     CONFIG.mainDomain = mainDomain;
     CONFIG.baseUrl = mainDomainUrl.startsWith('http') ? mainDomainUrl : `https://${mainDomain}`;
-    
+
     console.log(`📌 Domaine principal configuré: ${CONFIG.mainDomain}`);
     return CONFIG.mainDomain;
-
   } catch (error) {
     console.error('❌ Erreur accès au portail:', error.message);
     CONFIG.mainDomain = CONFIG.currentDomain;
@@ -242,7 +226,6 @@ async function checkUrlExists(url) {
     });
     return response.status === 200;
   } catch (error) {
-    // Si HEAD échoue, essayer GET avec limite
     try {
       const getResponse = await axios.get(url, {
         headers: { 'User-Agent': CONFIG.userAgent },
@@ -368,7 +351,6 @@ async function parseEpisodesJs(url) {
         };
 
         console.log(`   ✅ ${playerType}: ${numberedEpisodes.length} épisodes trouvés`);
-
       } catch (error) {
         continue;
       }
@@ -428,11 +410,9 @@ async function loadAnimeList() {
       timeout: 10000
     });
 
-    // Gestion des deux formats possibles
     let rawData = response.data;
-    
+
     if (rawData.animes && Array.isArray(rawData.animes)) {
-      // Format avec propriété "animes"
       animeList = rawData.animes.map(anime => ({
         ...anime,
         title: anime.titre || anime.title,
@@ -440,28 +420,51 @@ async function loadAnimeList() {
         originalTitle: anime.titre || anime.title
       }));
     } else if (Array.isArray(rawData)) {
-      // Format tableau direct
       animeList = rawData;
     } else {
       console.error('Format de données inconnu:', typeof rawData);
       animeList = [];
     }
 
-    // Normaliser chaque anime
+    // Normalisation et détection du type
     animeList.forEach(anime => {
       if (!anime.title && anime.titre) anime.title = anime.titre;
       if (!anime.link && anime.url) anime.link = anime.url;
-      
+
       if (anime.link && anime.link.includes('/scan')) {
         anime.type = 'scan';
-        const scanMatch = anime.link.match(/catalogue\/([^\/]+)\/scan(?:-([^\/]+))?\/(vf|vostfr)/);
+        // Extraire le pattern exact du scan (ex: scan_side_story, scan-modulo, etc.)
+        const scanMatch = anime.link.match(/\/catalogue\/[^\/]+\/(scan(?:_[^\/]+|-[^\/]+)?)\//);
         if (scanMatch) {
-          anime.scanSlug = scanMatch[1];
-          anime.scanName = scanMatch[2] || 'main';
-          anime.language = scanMatch[3];
+          anime.scanPattern = scanMatch[1]; // e.g., 'scan', 'scan_side_story', 'scan-modulo'
+          // Extraire le nom du scan sans le préfixe 'scan'
+          const pattern = scanMatch[1];
+          if (pattern === 'scan') {
+            anime.scanName = 'main';
+            anime.displayName = 'Scan Principal';
+          } else if (pattern.startsWith('scan_')) {
+            anime.scanName = pattern.substring(5); // after 'scan_'
+            anime.displayName = scanTypes[`scan-${anime.scanName}`] || anime.scanName;
+          } else if (pattern.startsWith('scan-')) {
+            anime.scanName = pattern.substring(5); // after 'scan-'
+            anime.displayName = scanTypes[`scan-${anime.scanName}`] || anime.scanName;
+          } else {
+            anime.scanName = pattern;
+            anime.displayName = pattern;
+          }
         }
+        // Extraire la langue
+        const langMatch = anime.link.match(/\/(vf|vostfr|va)\/?$/);
+        if (langMatch) anime.language = langMatch[1];
       } else {
         anime.type = 'anime';
+        // Extraire le pattern de saison/film/oav
+        const seasonMatch = anime.link.match(/\/catalogue\/[^\/]+\/(saison\d+(?:-\d+)?|film|oav)\//);
+        if (seasonMatch) {
+          anime.seasonPattern = seasonMatch[1];
+        }
+        const langMatch = anime.link.match(/\/(vf|vostfr|va)\/?$/);
+        if (langMatch) anime.language = langMatch[1];
       }
     });
 
@@ -482,7 +485,7 @@ function findAnime(animeId) {
     console.log('⚠️ animeList n\'est pas un tableau valide');
     return null;
   }
-  
+
   const normalizedId = animeId.toLowerCase().trim();
 
   let anime = animeList.find(a =>
@@ -509,6 +512,147 @@ function findAnime(animeId) {
   return anime;
 }
 
+// ==================== DÉTECTION DYNAMIQUE DES SAISONS ET SCANS ====================
+
+async function detectAvailableSeasons(animeUrl, animeSlug, language) {
+  try {
+    const response = await axios.get(animeUrl, {
+      headers: { 'User-Agent': CONFIG.userAgent },
+      timeout: 10000
+    });
+
+    const $ = cheerio.load(response.data);
+    const availableSeasons = [];
+
+    // Recherche tous les liens qui pourraient être des saisons, films, OAV
+    $('a').each((index, element) => {
+      const href = $(element).attr('href');
+      if (!href) return;
+
+      // Vérifier si le lien pointe vers un contenu du même slug
+      if (href.includes(`/catalogue/${animeSlug}/`)) {
+        // Extraire le segment après le slug
+        const afterSlug = href.split(`/catalogue/${animeSlug}/`)[1];
+        if (afterSlug) {
+          // Le segment peut être "saison3/vostfr/", "saison3-2/vf/", "film/vostfr/", "oav/vostfr/", etc.
+          const match = afterSlug.match(/^([^\/]+)\/(vf|vostfr|va)\/?/);
+          if (match) {
+            const typePattern = match[1]; // e.g., saison3, saison3-2, film, oav
+            const lang = match[2];
+
+            // Ne garder que si la langue correspond (ou si pas de filtre)
+            if (!language || lang === language) {
+              const fullUrl = href.startsWith('http') ? href : CONFIG.baseUrl + href;
+              availableSeasons.push({
+                pattern: typePattern,
+                type: typePattern.startsWith('saison') ? 'saison' : (typePattern === 'film' ? 'film' : (typePattern === 'oav' ? 'oav' : 'other')),
+                language: lang,
+                url: fullUrl
+              });
+            }
+          }
+        }
+      }
+    });
+
+    // Dédupliquer
+    const uniqueSeasons = [];
+    const seen = new Set();
+    for (const season of availableSeasons) {
+      const key = `${season.pattern}-${season.language}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueSeasons.push(season);
+      }
+    }
+
+    return uniqueSeasons;
+  } catch (error) {
+    console.error('Erreur détection saisons:', error);
+    return [];
+  }
+}
+
+async function detectAvailableScans(animeUrl, animeSlug, language) {
+  try {
+    const response = await axios.get(animeUrl, {
+      headers: { 'User-Agent': CONFIG.userAgent },
+      timeout: 10000
+    });
+
+    const $ = cheerio.load(response.data);
+    const availableScans = [];
+
+    $('a').each((index, element) => {
+      const href = $(element).attr('href');
+      if (!href) return;
+
+      if (href.includes(`/catalogue/${animeSlug}/`)) {
+        const afterSlug = href.split(`/catalogue/${animeSlug}/`)[1];
+        if (afterSlug && afterSlug.includes('/scan')) {
+          // Pattern: scan/... , scan_xxx/... , scan-xxx/...
+          const scanMatch = afterSlug.match(/^(scan(?:_[^\/]+|-[^\/]+)?)\/(vf|vostfr|va)\/?/);
+          if (scanMatch) {
+            const pattern = scanMatch[1]; // e.g., scan, scan_side_story, scan-modulo
+            const lang = scanMatch[2];
+
+            if (!language || lang === language) {
+              const fullUrl = href.startsWith('http') ? href : CONFIG.baseUrl + href;
+              // Extraire le nom du scan
+              let scanName = 'main';
+              let displayName = 'Scan Principal';
+              if (pattern === 'scan') {
+                scanName = 'main';
+                displayName = 'Scan Principal';
+              } else if (pattern.startsWith('scan_')) {
+                scanName = pattern.substring(5);
+                displayName = scanTypes[`scan-${scanName}`] || scanName;
+              } else if (pattern.startsWith('scan-')) {
+                scanName = pattern.substring(5);
+                displayName = scanTypes[`scan-${scanName}`] || scanName;
+              } else {
+                scanName = pattern;
+                displayName = pattern;
+              }
+
+              availableScans.push({
+                pattern: pattern,
+                scanName: scanName,
+                displayName: displayName,
+                language: lang,
+                url: fullUrl
+              });
+            }
+          }
+        }
+      }
+    });
+
+    // Dédupliquer
+    const uniqueScans = [];
+    const seen = new Set();
+    for (const scan of availableScans) {
+      const key = `${scan.pattern}-${scan.language}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueScans.push(scan);
+      }
+    }
+
+    // Trier : scan principal en premier, puis les autres
+    uniqueScans.sort((a, b) => {
+      if (a.pattern === 'scan') return -1;
+      if (b.pattern === 'scan') return 1;
+      return a.displayName.localeCompare(b.displayName);
+    });
+
+    return uniqueScans;
+  } catch (error) {
+    console.error('Erreur détection scans:', error);
+    return [];
+  }
+}
+
 // ==================== HANDLERS ====================
 
 async function handleAnimeDetails(animeId, language = 'vostfr') {
@@ -527,10 +671,7 @@ async function handleAnimeDetails(animeId, language = 'vostfr') {
   const slugMatch = anime.link.match(/catalogue\/([^\/]+)/);
   const animeSlug = slugMatch ? slugMatch[1] : normalizeSlug(anime.title);
 
-  const availableSeasons = anime.type === 'anime'
-    ? await detectAvailableSeasons(anime.link, animeSlug, language)
-    : [];
-
+  const availableSeasons = await detectAvailableSeasons(anime.link, animeSlug, language);
   const availableScans = await detectAvailableScans(anime.link, animeSlug, language);
 
   let pageInfo = { thumbnail: null, description: null, scraped: false };
@@ -558,7 +699,7 @@ async function handleAnimeDetails(animeId, language = 'vostfr') {
   };
 }
 
-async function handleSeasonDetails(animeId, season, language = 'vostfr') {
+async function handleSeasonDetails(animeId, seasonPattern, language = 'vostfr') {
   await loadAnimeList();
 
   const anime = findAnime(animeId);
@@ -570,24 +711,22 @@ async function handleSeasonDetails(animeId, season, language = 'vostfr') {
   const slugMatch = anime.link.match(/catalogue\/([^\/]+)/);
   const animeSlug = slugMatch ? slugMatch[1] : normalizeSlug(anime.title);
 
-  const seasonMatch = season.toString().match(/(\d+)([a-z]*)/i);
-  const seasonNumber = seasonMatch ? parseInt(seasonMatch[1]) : parseInt(season);
-  const seasonSuffix = (seasonMatch ? seasonMatch[2] : '').toLowerCase();
-  const seasonName = `saison${seasonNumber}${seasonSuffix}`;
+  // Construire l'URL de la saison/film/oav
+  let seasonUrl = `${CONFIG.baseUrl}/catalogue/${animeSlug}/${seasonPattern}/${language}/`;
 
-  let seasonUrl = `${CONFIG.baseUrl}/catalogue/${animeSlug}/${seasonName}/${language}/`;
-
+  // Vérifier si l'URL existe
   let urlExists = await checkUrlExists(seasonUrl);
   if (!urlExists) {
-    seasonUrl = `${CONFIG.baseUrl}/catalogue/${animeSlug}/${seasonName}/${language}`;
+    // Essayer sans slash final
+    seasonUrl = seasonUrl.replace(/\/$/, '');
     urlExists = await checkUrlExists(seasonUrl);
-
-    if (!urlExists) {
-      return { success: false, error: `Saison ${seasonName} non disponible en ${language}` };
-    }
   }
 
-  const episodesJsUrl = `${seasonUrl}/episodes.js`;
+  if (!urlExists) {
+    return { success: false, error: `Saison/film "${seasonPattern}" non disponible en ${language}` };
+  }
+
+  const episodesJsUrl = `${seasonUrl.replace(/\/$/, '')}/episodes.js`;
   const episodesData = await parseEpisodesJs(episodesJsUrl);
 
   if (Object.keys(episodesData).length === 0) {
@@ -630,23 +769,29 @@ async function handleSeasonDetails(animeId, season, language = 'vostfr') {
 
   const sortedEpisodes = [...totalEpisodes].sort((a, b) => a - b);
 
+  // Déterminer le type de contenu (saison, film, oav)
+  let contentType = 'saison';
+  if (seasonPattern === 'film') contentType = 'film';
+  else if (seasonPattern === 'oav') contentType = 'oav';
+  else if (seasonPattern.startsWith('saison')) contentType = 'saison';
+
   return {
     success: true,
     data: {
       id: animeSlug,
       title: anime.title,
       originalLink: anime.link,
-      contentType: 'saison',
-      actualType: 'saison',
+      contentType: contentType,
+      actualType: contentType,
       actualLanguage: language,
-      actualSeason: seasonName,
-      seasonNumber: seasonNumber,
-      seasonSuffix: seasonSuffix,
+      actualSeason: seasonPattern,
+      seasonNumber: seasonPattern.match(/\d+/) ? parseInt(seasonPattern.match(/\d+/)[0]) : null,
+      seasonSuffix: seasonPattern.includes('-') ? seasonPattern.split('-')[1] : null,
       links: {
         pageUrl: seasonUrl,
         episodesJs: episodesJsUrl,
-        vostfr: `${CONFIG.baseUrl}/catalogue/${animeSlug}/${seasonName}/vostfr/`,
-        vf: `${CONFIG.baseUrl}/catalogue/${animeSlug}/${seasonName}/vf/`
+        vostfr: `${CONFIG.baseUrl}/catalogue/${animeSlug}/${seasonPattern}/vostfr/`,
+        vf: `${CONFIG.baseUrl}/catalogue/${animeSlug}/${seasonPattern}/vf/`
       },
       thumbnail: seasonInfo.thumbnail,
       description: seasonInfo.description,
@@ -660,144 +805,7 @@ async function handleSeasonDetails(animeId, season, language = 'vostfr') {
   };
 }
 
-async function detectAvailableSeasons(animeUrl, animeSlug, language) {
-  try {
-    const response = await axios.get(animeUrl, {
-      headers: { 'User-Agent': CONFIG.userAgent },
-      timeout: 10000
-    });
-
-    const $ = cheerio.load(response.data);
-    const availableSeasons = [];
-
-    $('a').each((index, element) => {
-      const href = $(element).attr('href');
-      const text = $(element).text().toLowerCase();
-
-      if (href && (href.includes('/saison') || text.includes('saison'))) {
-        let fullUrl = href.startsWith('http') ? href : CONFIG.baseUrl + href;
-
-        if (fullUrl.includes(animeSlug) || href.includes('/catalogue/')) {
-          const seasonMatch = href.match(/saison(\d+)([a-z]*)/i) ||
-            href.match(/season[\s\-]?(\d+)([a-z]*)/i) ||
-            text.match(/saison[\s\-]?(\d+)([a-z]*)/i);
-
-          if (seasonMatch) {
-            const seasonNum = parseInt(seasonMatch[1]);
-            const suffix = (seasonMatch[2] || '').toLowerCase();
-            const fullName = `saison${seasonNum}${suffix}`;
-
-            const langMatch = href.match(/\/(vf|vostfr)\//);
-            const urlLang = langMatch ? langMatch[1] : null;
-
-            availableSeasons.push({
-              season: seasonNum,
-              suffix: suffix,
-              fullName: fullName,
-              url: fullUrl,
-              language: urlLang || language,
-              type: 'anime'
-            });
-          }
-        }
-      }
-    });
-
-    const uniqueSeasons = [];
-    const seen = new Set();
-
-    availableSeasons.forEach(season => {
-      const key = `${season.season}-${season.suffix}-${season.language}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        uniqueSeasons.push(season);
-      }
-    });
-
-    uniqueSeasons.sort((a, b) => {
-      if (a.season !== b.season) return a.season - b.season;
-      if (a.suffix !== b.suffix) return a.suffix.localeCompare(b.suffix);
-      return a.language.localeCompare(b.language);
-    });
-
-    return uniqueSeasons;
-  } catch (error) {
-    console.error('Erreur détection saisons:', error);
-    return [];
-  }
-}
-
-async function detectAvailableScans(animeUrl, animeSlug, language) {
-  try {
-    const response = await axios.get(animeUrl, {
-      headers: { 'User-Agent': CONFIG.userAgent },
-      timeout: 10000
-    });
-
-    const $ = cheerio.load(response.data);
-    const availableScans = [];
-
-    $('a').each((index, element) => {
-      const href = $(element).attr('href');
-
-      if (href && href.includes('/scan')) {
-        let fullUrl = href.startsWith('http') ? href : CONFIG.baseUrl + href;
-
-        if (fullUrl.includes(animeSlug) || href.includes('/catalogue/')) {
-          const scanMatch = href.match(/scan(?:-([^\/]+))?\/(vf|vostfr)/);
-
-          if (scanMatch) {
-            const scanType = scanMatch[1] || 'main';
-            const scanLang = scanMatch[2];
-
-            if (!language || scanLang === language) {
-              let scanName = scanType;
-              let displayName = scanTypes[`scan-${scanType}`] || scanType;
-
-              if (scanType === 'main') {
-                scanName = 'scan';
-                displayName = 'Scan Principal';
-              }
-
-              availableScans.push({
-                scanType: scanType,
-                scanName: scanName,
-                displayName: displayName,
-                url: fullUrl,
-                language: scanLang,
-                type: 'scan'
-              });
-            }
-          }
-        }
-      }
-    });
-
-    const uniqueScans = [];
-    const seen = new Set();
-
-    availableScans.forEach(scan => {
-      const key = `${scan.scanType}-${scan.language}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        uniqueScans.push(scan);
-      }
-    });
-
-    uniqueScans.sort((a, b) => {
-      if (a.scanType === 'main') return -1;
-      if (b.scanType === 'main') return 1;
-      return a.displayName.localeCompare(b.displayName);
-    });
-
-    return uniqueScans;
-  } catch (error) {
-    console.error('Erreur détection scans:', error);
-    return [];
-  }
-}
-
-async function handleScanDetails(animeId, scanName = 'scan', language = 'vostfr') {
+async function handleScanDetails(animeId, scanPattern, language = 'vostfr') {
   await loadAnimeList();
 
   const anime = findAnime(animeId);
@@ -809,24 +817,32 @@ async function handleScanDetails(animeId, scanName = 'scan', language = 'vostfr'
   const slugMatch = anime.link.match(/catalogue\/([^\/]+)/);
   const animeSlug = slugMatch ? slugMatch[1] : normalizeSlug(anime.title);
 
+  // Construire l'URL du scan selon le pattern
   let scanUrl;
-  if (scanName === 'scan' || scanName === 'main') {
+  if (scanPattern === 'main' || scanPattern === 'scan') {
     scanUrl = `${CONFIG.baseUrl}/catalogue/${animeSlug}/scan/${language}/`;
   } else {
-    scanUrl = `${CONFIG.baseUrl}/catalogue/${animeSlug}/scan-${scanName}/${language}/`;
-  }
-
-  let urlExists = await checkUrlExists(scanUrl);
-  if (!urlExists) {
-    scanUrl = scanUrl.replace(/\/$/, '');
-    urlExists = await checkUrlExists(scanUrl);
-
-    if (!urlExists) {
-      return { success: false, error: `Scan ${scanName} non disponible en ${language}` };
+    // Essayer d'abord avec underscore, puis avec tiret
+    const patterns = [
+      `scan_${scanPattern}`,
+      `scan-${scanPattern}`,
+      scanPattern // au cas où c'est déjà un pattern complet
+    ];
+    let found = false;
+    for (const pattern of patterns) {
+      const testUrl = `${CONFIG.baseUrl}/catalogue/${animeSlug}/${pattern}/${language}/`;
+      if (await checkUrlExists(testUrl)) {
+        scanUrl = testUrl;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      return { success: false, error: `Scan ${scanPattern} non disponible en ${language}` };
     }
   }
 
-  const episodesJsUrl = `${scanUrl}/episodes.js`;
+  const episodesJsUrl = `${scanUrl.replace(/\/$/, '')}/episodes.js`;
   const chaptersData = await parseEpisodesJs(episodesJsUrl);
 
   if (Object.keys(chaptersData).length === 0) {
@@ -870,14 +886,14 @@ async function handleScanDetails(animeId, scanName = 'scan', language = 'vostfr'
   }
 
   const sortedChapters = [...totalChapters].sort((a, b) => a - b);
-  const displayName = scanTypes[`scan-${scanName}`] || (scanName === 'scan' ? 'Scan Principal' : scanName);
+  const displayName = scanTypes[`scan-${scanPattern}`] || (scanPattern === 'scan' ? 'Scan Principal' : scanPattern);
 
   return {
     success: true,
     data: {
       id: animeSlug,
       title: anime.title,
-      scanName: scanName,
+      scanName: scanPattern,
       displayName: displayName,
       originalLink: anime.link,
       contentType: 'scan',
@@ -886,8 +902,8 @@ async function handleScanDetails(animeId, scanName = 'scan', language = 'vostfr'
       links: {
         pageUrl: scanUrl,
         episodesJs: episodesJsUrl,
-        vostfr: `${CONFIG.baseUrl}/catalogue/${animeSlug}/scan${scanName === 'scan' ? '' : '-' + scanName}/vostfr/`,
-        vf: `${CONFIG.baseUrl}/catalogue/${animeSlug}/scan${scanName === 'scan' ? '' : '-' + scanName}/vf/`
+        vostfr: `${CONFIG.baseUrl}/catalogue/${animeSlug}/scan${scanPattern === 'main' ? '' : '_' + scanPattern}/vostfr/`,
+        vf: `${CONFIG.baseUrl}/catalogue/${animeSlug}/scan${scanPattern === 'main' ? '' : '_' + scanPattern}/vf/`
       },
       thumbnail: scanInfo.thumbnail,
       description: scanInfo.description,
@@ -989,13 +1005,14 @@ app.get('/api/anime/:id', async (req, res) => {
   }
 });
 
+// Note: :season peut être "saison3", "saison3-2", "film", "oav", etc.
 app.get('/api/anime/:id/saison/:season', async (req, res) => {
   try {
     const animeId = decodeURIComponent(req.params.id);
-    const season = req.params.season;
+    const seasonPattern = req.params.season; // peut être "saison3", "saison3-2", "film", "oav"
     const language = req.query.lang || 'vostfr';
 
-    const result = await handleSeasonDetails(animeId, season, language);
+    const result = await handleSeasonDetails(animeId, seasonPattern, language);
 
     if (!result.success) return res.status(404).json(result);
     res.json(result);
@@ -1004,13 +1021,14 @@ app.get('/api/anime/:id/saison/:season', async (req, res) => {
   }
 });
 
+// Pour les scans, on utilise un paramètre "scan" qui peut être "main", "side_story", "ragnarok", etc.
 app.get('/api/scan/:id', async (req, res) => {
   try {
     const animeId = decodeURIComponent(req.params.id);
-    const scanName = req.query.scan || 'scan';
+    const scanPattern = req.query.scan || 'main'; // main, side_story, ragnarok, etc.
     const language = req.query.lang || 'vostfr';
 
-    const result = await handleScanDetails(animeId, scanName, language);
+    const result = await handleScanDetails(animeId, scanPattern, language);
 
     if (!result.success) return res.status(404).json(result);
     res.json(result);
@@ -1074,30 +1092,29 @@ app.get('/api/scans', async (req, res) => {
       );
     }
 
+    // Grouper par slug (titre sans langue)
     const groupedScans = {};
     scans.forEach(scan => {
-      if (scan.scanSlug && !groupedScans[scan.scanSlug]) {
-        groupedScans[scan.scanSlug] = {
-          title: scan.title ? scan.title.replace(/ \(VF\)$| \(VOSTFR\)$/, '') : 'Unknown',
-          scanSlug: scan.scanSlug,
+      const baseTitle = scan.title.replace(/ \(VF\)$| \(VOSTFR\)$| \(VA\)$/, '');
+      const slug = normalizeSlug(baseTitle);
+      if (!groupedScans[slug]) {
+        groupedScans[slug] = {
+          title: baseTitle,
+          slug: slug,
           languages: [],
           scans: []
         };
       }
-
-      if (scan.scanSlug && groupedScans[scan.scanSlug]) {
-        if (!groupedScans[scan.scanSlug].languages.includes(scan.language)) {
-          groupedScans[scan.scanSlug].languages.push(scan.language);
-        }
-
-        groupedScans[scan.scanSlug].scans.push({
-          scanName: scan.scanName,
-          displayName: scanTypes[`scan-${scan.scanName}`] || (scan.scanName === 'main' ? 'Scan Principal' : scan.scanName),
-          language: scan.language,
-          url: scan.link,
-          type: 'scan'
-        });
+      if (!groupedScans[slug].languages.includes(scan.language)) {
+        groupedScans[slug].languages.push(scan.language);
       }
+      groupedScans[slug].scans.push({
+        scanName: scan.scanName || 'main',
+        displayName: scan.displayName || scanTypes[`scan-${scan.scanName}`] || 'Scan',
+        language: scan.language,
+        url: scan.link,
+        pattern: scan.scanPattern
+      });
     });
 
     const scanList = Object.values(groupedScans);
@@ -1122,7 +1139,7 @@ app.get('/api/scans', async (req, res) => {
 app.get('/api/anime/:id/saison/:season/episode/:episode', async (req, res) => {
   try {
     const animeId = decodeURIComponent(req.params.id);
-    const season = req.params.season;
+    const seasonPattern = req.params.season;
     const episode = parseInt(req.params.episode);
     const language = req.query.lang || 'vostfr';
     const player = req.query.player;
@@ -1131,7 +1148,7 @@ app.get('/api/anime/:id/saison/:season/episode/:episode', async (req, res) => {
       return res.status(400).json({ success: false, error: "Numéro d'épisode invalide" });
     }
 
-    const seasonResult = await handleSeasonDetails(animeId, season, language);
+    const seasonResult = await handleSeasonDetails(animeId, seasonPattern, language);
 
     if (!seasonResult.success) return res.status(404).json(seasonResult);
 
@@ -1209,7 +1226,7 @@ app.get('/api/scan/:id/chapitre/:chapter', async (req, res) => {
   try {
     const animeId = decodeURIComponent(req.params.id);
     const chapter = parseInt(req.params.chapter);
-    const scanName = req.query.scan || 'scan';
+    const scanPattern = req.query.scan || 'main';
     const language = req.query.lang || 'vostfr';
     const volume = req.query.volume;
 
@@ -1217,7 +1234,7 @@ app.get('/api/scan/:id/chapitre/:chapter', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Numéro de chapitre invalide' });
     }
 
-    const scanResult = await handleScanDetails(animeId, scanName, language);
+    const scanResult = await handleScanDetails(animeId, scanPattern, language);
 
     if (!scanResult.success) return res.status(404).json(scanResult);
 
