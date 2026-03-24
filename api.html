@@ -34,7 +34,6 @@
             --radius-lg: 24px;
             --shadow-sm: 0 8px 20px -8px rgba(99, 102, 241, 0.2);
             --shadow-hover: 0 20px 30px -12px rgba(99, 102, 241, 0.3);
-            --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
 
         body {
@@ -47,7 +46,6 @@
             position: relative;
         }
 
-        /* FOND ANIMÉ */
         .animated-bg {
             position: fixed;
             top: 0;
@@ -66,9 +64,34 @@
             animation: float 25s infinite alternate ease-in-out;
         }
 
-        .orb1 { width: 600px; height: 600px; background: rgba(99, 102, 241, 0.6); top: -200px; left: -100px; animation-duration: 20s; }
-        .orb2 { width: 500px; height: 500px; background: rgba(139, 92, 246, 0.5); bottom: -150px; right: -100px; animation-duration: 28s; animation-delay: -5s; }
-        .orb3 { width: 400px; height: 400px; background: rgba(45, 212, 191, 0.5); top: 40%; left: 40%; animation-duration: 22s; animation-delay: -2s; }
+        .orb1 {
+            width: 600px;
+            height: 600px;
+            background: rgba(99, 102, 241, 0.6);
+            top: -200px;
+            left: -100px;
+            animation-duration: 20s;
+        }
+
+        .orb2 {
+            width: 500px;
+            height: 500px;
+            background: rgba(139, 92, 246, 0.5);
+            bottom: -150px;
+            right: -100px;
+            animation-duration: 28s;
+            animation-delay: -5s;
+        }
+
+        .orb3 {
+            width: 400px;
+            height: 400px;
+            background: rgba(45, 212, 191, 0.5);
+            top: 40%;
+            left: 40%;
+            animation-duration: 22s;
+            animation-delay: -2s;
+        }
 
         .particles {
             position: fixed;
@@ -110,12 +133,6 @@
             to { transform: rotate(360deg); }
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-        }
-
-        /* TOPBAR */
         .topbar {
             position: fixed;
             top: 0;
@@ -149,20 +166,71 @@
             transition: all 0.2s;
             margin-right: 16px;
         }
-        .hamburger:hover { background: rgba(255, 255, 255, 0.1); transform: scale(1.05); }
-        .hamburger span { display: block; width: 22px; height: 2px; background-color: white; border-radius: 2px; transition: transform 0.3s ease, opacity 0.2s ease; }
-        .hamburger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
-        .hamburger.open span:nth-child(2) { opacity: 0; transform: scale(0); }
-        .hamburger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+        .hamburger:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+        .hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background-color: white;
+            border-radius: 2px;
+            transition: transform 0.3s ease, opacity 0.2s ease;
+        }
+        .hamburger.open span:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+        .hamburger.open span:nth-child(2) {
+            opacity: 0;
+            transform: scale(0);
+        }
+        .hamburger.open span:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
 
-        .logo-area { display: flex; align-items: center; gap: 12px; flex: 1; }
-        .logo-mark { width: 40px; height: 40px; border-radius: 10px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
-        .logo-text { font-weight: 800; font-size: 18px; background: linear-gradient(135deg, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+        .logo-mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .logo-text {
+            font-weight: 800;
+            font-size: 18px;
+            background: linear-gradient(135deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-        .topbar-right { display: flex; align-items: center; gap: 16px; }
-        .status-badge { background: var(--accent-dim); padding: 6px 12px; border-radius: 30px; font-size: 12px; font-weight: 500; color: var(--accent); }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
 
-        /* DRAWER */
+        .status-badge {
+            background: var(--accent-dim);
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--accent);
+        }
+
         .drawer {
             position: fixed;
             top: 0;
@@ -180,88 +248,437 @@
             display: flex;
             flex-direction: column;
         }
-        .drawer.open { transform: translateX(0); }
-        .drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 20px; border-bottom: 1px solid var(--border); }
-        .drawer-logo { display: flex; align-items: center; gap: 10px; }
-        .drawer-logo .logo-mark { width: 36px; height: 36px; font-size: 14px; }
-        .close-drawer { background: transparent; border: none; font-size: 28px; color: var(--text-muted); cursor: pointer; width: 36px; height: 36px; border-radius: 8px; transition: all 0.2s; }
-        .close-drawer:hover { color: var(--error); background: rgba(239,68,68,0.1); transform: rotate(90deg); }
-        .drawer-nav { flex: 1; padding: 16px 12px; }
-        .nav-section { margin: 20px 0 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
-        .nav-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 12px; color: var(--text-secondary); text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s; cursor: pointer; }
-        .nav-item i { width: 20px; color: var(--accent); }
-        .nav-item:hover { background: var(--accent-dim); color: var(--accent); transform: translateX(5px); }
-        .nav-item.active { background: var(--accent); color: white; }
-        .nav-item.active i { color: white; }
-        .drawer-footer { padding: 20px; border-top: 1px solid var(--border); }
-        .drawer-stats { display: flex; justify-content: space-between; text-align: center; }
-        .stat-item .value { font-weight: 800; font-size: 18px; color: var(--accent); }
-        .stat-item .label { font-size: 11px; color: var(--text-muted); }
-        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 199; display: none; opacity: 0; transition: opacity 0.3s; }
-        .drawer-overlay.active { display: block; opacity: 1; }
 
-        /* MAIN CONTENT */
-        .main-content { padding: 84px 24px 40px; max-width: 1400px; margin: 0 auto; position: relative; z-index: 5; }
-        .header { margin-bottom: 40px; text-align: center; animation: fadeInUp 0.8s ease-out forwards; }
-        .header h1 { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; background: linear-gradient(135deg, var(--accent), #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .header p { color: var(--text-secondary); font-size: 18px; }
-        .section { margin-bottom: 32px; animation: fadeInUp 0.6s ease forwards; }
-        .section-header { margin-bottom: 20px; }
-        .section-header h2 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--text); }
-        .card { background: var(--surface); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; transition: all 0.3s ease; }
-        .endpoint-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
-        .endpoint-card { background: var(--surface-strong); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; transition: all 0.3s ease; }
-        .endpoint-card:hover { transform: translateY(-4px); border-color: var(--border-strong); box-shadow: var(--shadow-hover); }
-        .method { display: inline-block; padding: 4px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; margin-bottom: 12px; }
+        .drawer.open {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .drawer-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .drawer-logo .logo-mark {
+            width: 36px;
+            height: 36px;
+            font-size: 14px;
+        }
+        .close-drawer {
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .close-drawer:hover {
+            color: var(--error);
+            background: rgba(239,68,68,0.1);
+            transform: rotate(90deg);
+        }
+
+        .drawer-nav {
+            flex: 1;
+            padding: 16px 12px;
+        }
+        .nav-section {
+            margin: 20px 0 8px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .nav-item i {
+            width: 20px;
+            color: var(--accent);
+        }
+        .nav-item:hover {
+            background: var(--accent-dim);
+            color: var(--accent);
+            transform: translateX(5px);
+        }
+        .nav-item.active {
+            background: var(--accent);
+            color: white;
+        }
+        .nav-item.active i {
+            color: white;
+        }
+
+        .drawer-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+        }
+        .drawer-stats {
+            display: flex;
+            justify-content: space-between;
+            text-align: center;
+        }
+        .stat-item .value {
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--accent);
+        }
+        .stat-item .label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 199;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .drawer-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .main-content {
+            padding: 84px 24px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 5;
+        }
+
+        .header {
+            margin-bottom: 40px;
+            text-align: center;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+        .header h1 {
+            font-size: 44px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header p {
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+
+        .section {
+            margin-bottom: 32px;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .section-header {
+            margin-bottom: 20px;
+        }
+        .section-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+        }
+
+        .card {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .endpoint-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+        }
+
+        .endpoint-card {
+            background: var(--surface-strong);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .endpoint-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-strong);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
         .method.get { background: rgba(16, 185, 129, 0.1); color: var(--green); }
-        .endpoint-url { font-family: 'Courier New', monospace; font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 12px; word-break: break-all; }
-        .endpoint-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
-        .params { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
-        .param { font-size: 12px; margin-bottom: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-        .param-name { font-weight: 600; color: var(--accent); min-width: 70px; }
-        .param-input { flex: 1; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: white; font-size: 12px; transition: all 0.2s; }
-        .param-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
-        .test-btn { margin-top: 12px; padding: 8px 16px; border-radius: 8px; background: var(--accent); color: white; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-        .test-btn:hover { background: #5254d4; transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-        .test-btn:active { transform: translateY(0); }
 
-        /* MODAL */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; animation: fadeInUp 0.3s ease-out; }
-        .modal.active { display: flex; }
-        .modal-content { background: var(--surface-strong); border-radius: var(--radius-lg); max-width: 800px; width: 90%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: var(--shadow-modal); animation: fadeInUp 0.3s ease-out; border: 1px solid var(--border); }
-        .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h3 { font-size: 18px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
-        .modal-header h3 i { color: var(--accent); }
-        .close-modal { background: transparent; border: none; font-size: 28px; cursor: pointer; color: var(--text-muted); transition: all 0.2s; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-        .close-modal:hover { color: var(--error); background: rgba(239,68,68,0.1); transform: rotate(90deg); }
-        .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
-        .modal-body pre { background: var(--bg); padding: 16px; border-radius: var(--radius); overflow-x: auto; font-size: 12px; font-family: 'Courier New', monospace; border: 1px solid var(--border); white-space: pre-wrap; word-break: break-all; }
-        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; }
-        .modal-footer button { padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-        .btn-copy { background: var(--accent-dim); color: var(--accent); }
-        .btn-copy:hover { background: var(--accent); color: white; transform: translateY(-2px); }
-        .btn-close { background: var(--error); color: white; }
-        .btn-close:hover { background: #dc2626; transform: translateY(-2px); }
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-        .stat-card { background: var(--surface-strong); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: center; transition: all 0.3s ease; cursor: pointer; }
-        .stat-card:hover { transform: translateY(-4px); border-color: var(--accent); }
-        .stat-value { font-size: 32px; font-weight: 800; color: var(--accent); }
-        .stat-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
-        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .endpoint-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .params {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .param {
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+        .param-name {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .test-area {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .test-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: white;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .test-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .test-btn:hover {
+            background: #5254d4;
+            transform: translateY(-2px);
+        }
+        .test-result {
+            margin-top: 8px;
+            font-size: 11px;
+            background: var(--bg);
+            padding: 8px;
+            border-radius: 6px;
+            display: none;
+            max-height: 200px;
+            overflow: auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        .stat-card {
+            background: var(--surface-strong);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            display: none;
+            animation: fadeInUp 0.3s ease-out;
+        }
+        .alert-success { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: var(--green); }
+        .alert-error { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: var(--error); }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
 
         @media (max-width: 768px) {
             .main-content { padding: 84px 16px 40px; }
             .endpoint-grid { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .header h1 { font-size: 32px; }
-            .param { flex-direction: column; align-items: flex-start; }
-            .param-name { min-width: auto; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: var(--surface-strong);
+            border-radius: var(--radius-lg);
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .close-modal {
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-muted);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+        }
+        .close-modal:hover {
+            color: var(--error);
+            background: rgba(239,68,68,0.1);
+        }
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-body pre {
+            background: var(--bg);
+            padding: 16px;
+            border-radius: var(--radius);
+            overflow-x: auto;
+            font-size: 12px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .modal-footer button {
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-copy {
+            background: var(--accent-dim);
+            color: var(--accent);
+        }
+        .btn-copy:hover {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-close-modal {
+            background: var(--error);
+            color: white;
+        }
+        .btn-close-modal:hover {
+            background: #dc2626;
         }
     </style>
 </head>
 <body>
-    <div class="animated-bg"><div class="gradient-orb orb1"></div><div class="gradient-orb orb2"></div><div class="gradient-orb orb3"></div></div>
+    <div class="animated-bg">
+        <div class="gradient-orb orb1"></div>
+        <div class="gradient-orb orb2"></div>
+        <div class="gradient-orb orb3"></div>
+    </div>
     <div class="particles" id="particles"></div>
 
     <header class="topbar">
@@ -285,6 +702,7 @@
     </aside>
 
     <main class="main-content" id="mainContent">
+        <div id="global-alert" class="alert"></div>
         <div class="header" id="overview-section"><h1>ANIME API</h1><p>API non officielle complète pour récupérer épisodes, scans et streaming</p></div>
 
         <div class="section" id="stats-section"><div class="stats-grid" id="statsGrid"><div class="stat-card"><div class="stat-value" id="totalAnimes">-</div><div class="stat-label">Animes</div></div><div class="stat-card"><div class="stat-value" id="totalScans">-</div><div class="stat-label">Scans</div></div><div class="stat-card"><div class="stat-value" id="totalPlayers">-</div><div class="stat-label">Lecteurs</div></div><div class="stat-card"><div class="stat-value" id="domainStatus">-</div><div class="stat-label">Domaine</div></div></div></div>
@@ -292,10 +710,10 @@
         <div class="section" id="anime-section" style="display:none;"><div class="section-header"><h2><i class="fas fa-tv"></i> Endpoints Anime</h2></div><div class="endpoint-grid" id="animeEndpoints"></div></div>
         <div class="section" id="scan-section" style="display:none;"><div class="section-header"><h2><i class="fas fa-book"></i> Endpoints Scan</h2></div><div class="endpoint-grid" id="scanEndpoints"></div></div>
         <div class="section" id="utils-section" style="display:none;"><div class="section-header"><h2><i class="fas fa-tools"></i> Utilitaires</h2></div><div class="endpoint-grid" id="utilsEndpoints"></div></div>
-        <div class="section" id="status-section" style="display:none;"><div class="section-header"><h2><i class="fas fa-chart-line"></i> Statut serveur</h2></div><div class="card" id="serverStatus"><div style="text-align:center; padding:20px;"><div class="loading-spinner"></div><p>Chargement...</p></div></div></div>
+        <div class="section" id="status-section" style="display:none;"><div class="section-header"><h2><i class="fas fa-chart-line"></i> Statut serveur</h2></div><div class="card" id="serverStatus"><div style="text-align:center; padding:20px;"><div class="loading"></div><p>Chargement...</p></div></div></div>
     </main>
 
-    <!-- MODAL -->
+    <!-- Modal -->
     <div id="resultModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -303,11 +721,11 @@
                 <button class="close-modal" onclick="closeModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <pre id="modalResponse"><div class="loading-spinner"></div> Chargement...</pre>
+                <pre id="modalResponse"><div class="loading"></div> Chargement...</pre>
             </div>
             <div class="modal-footer">
                 <button class="btn-copy" onclick="copyResponse()"><i class="fas fa-copy"></i> Copier</button>
-                <button class="btn-close" onclick="closeModal()"><i class="fas fa-times"></i> Fermer</button>
+                <button class="btn-close-modal" onclick="closeModal()"><i class="fas fa-times"></i> Fermer</button>
             </div>
         </div>
     </div>
@@ -316,33 +734,33 @@
         const API_BASE = window.location.origin;
         let currentResponseData = '';
 
-        // Endpoints complets
+        // Endpoints
         const animeEndpoints = [
             { method: 'GET', url: '/api/anime', desc: 'Liste tous les animes et scans (pagination, filtre type, recherche)', params: [
                 { name: 'page', desc: 'Page (défaut 1)', default: '1' },
                 { name: 'limit', desc: 'Par page (défaut 50)', default: '10' },
                 { name: 'type', desc: 'anime ou scan', default: '' },
                 { name: 'search', desc: 'Recherche par titre', default: '' }
-            ] },
+            ]},
             { method: 'GET', url: '/api/anime/:id', desc: 'Détails d\'un anime (saisons disponibles, scans associés)', params: [
                 { name: 'id', desc: 'Nom de l\'anime (ex: jujutsu-kaisen, solo-leveling)', default: 'jujutsu-kaisen' },
                 { name: 'lang', desc: 'vf ou vostfr (défaut vostfr)', default: 'vostfr' }
-            ] },
-            { method: 'GET', url: '/api/anime/:id/saison/:season', desc: 'Liste des épisodes d\'une saison (saison1, saison3-2, film, oav)', params: [
+            ]},
+            { method: 'GET', url: '/api/anime/:id/saison/:season', desc: 'Liste des épisodes d\'une saison (saison3, saison3-2, film, oav)', params: [
                 { name: 'id', desc: 'Nom anime', default: 'jujutsu-kaisen' },
                 { name: 'season', desc: 'Saison (ex: saison1, saison3-2, film, oav)', default: 'saison1' },
                 { name: 'lang', desc: 'Langue', default: 'vostfr' }
-            ] },
+            ]},
             { method: 'GET', url: '/api/anime/:id/saison/:season/episode/:number', desc: 'URLs d\'un épisode spécifique (tous lecteurs)', params: [
                 { name: 'id', desc: 'Nom anime', default: 'jujutsu-kaisen' },
                 { name: 'season', desc: 'Saison', default: 'saison1' },
                 { name: 'number', desc: 'Numéro épisode', default: '1' },
                 { name: 'player', desc: 'Filtrer par lecteur (optionnel)', default: '' }
-            ] },
+            ]},
             { method: 'GET', url: '/api/anime/:id/scans', desc: 'Liste des scans disponibles pour un anime', params: [
                 { name: 'id', desc: 'Nom anime', default: 'solo-leveling' },
                 { name: 'lang', desc: 'Langue', default: 'vostfr' }
-            ] }
+            ]}
         ];
 
         const scanEndpoints = [
@@ -351,18 +769,18 @@
                 { name: 'limit', desc: 'Limite', default: '10' },
                 { name: 'lang', desc: 'vf/vostfr', default: '' },
                 { name: 'search', desc: 'Recherche', default: '' }
-            ] },
+            ]},
             { method: 'GET', url: '/api/scan/:id', desc: 'Détails d\'un scan (volumes et chapitres)', params: [
                 { name: 'id', desc: 'Nom du manga', default: 'solo-leveling' },
                 { name: 'scan', desc: 'main / side_story / ragnarok / arise / modulo', default: 'main' },
                 { name: 'lang', desc: 'Langue', default: 'vostfr' }
-            ] },
+            ]},
             { method: 'GET', url: '/api/scan/:id/chapitre/:number', desc: 'URL du chapitre demandé', params: [
                 { name: 'id', desc: 'Nom manga', default: 'solo-leveling' },
                 { name: 'number', desc: 'Numéro chapitre', default: '1' },
                 { name: 'scan', desc: 'Type de scan', default: 'main' },
                 { name: 'volume', desc: 'Filtrer par volume', default: '' }
-            ] }
+            ]}
         ];
 
         const utilsEndpoints = [
@@ -370,24 +788,25 @@
                 { name: 'q', desc: 'Terme (min 2 caractères)', default: 'jujutsu' },
                 { name: 'type', desc: 'anime/scan', default: '' },
                 { name: 'limit', desc: 'Max résultats', default: '10' }
-            ] },
+            ]},
             { method: 'GET', url: '/api/players', desc: 'Liste des lecteurs supportés (vidéo et scan)', params: [] },
             { method: 'GET', url: '/api/status', desc: 'Statut complet du serveur (domaine, compteurs)', params: [] },
             { method: 'GET', url: '/api/domain/update', desc: 'Force la détection du domaine principal', params: [] },
             { method: 'GET', url: '/api/test/url', desc: 'Teste disponibilité d\'une URL', params: [
                 { name: 'url', desc: 'URL à tester', default: 'https://anime-sama.to' }
-            ] }
+            ]},
+            { method: 'GET', url: '/api/direct/episodes', desc: 'Parse direct un fichier episodes.js', params: [
+                { name: 'url', desc: 'URL du fichier episodes.js', default: '' }
+            ]}
         ];
 
         function buildUrl(endpoint, values) {
             let url = endpoint;
-            // Remplacer les paramètres dynamiques
             for (const [key, val] of Object.entries(values)) {
                 if (val && url.includes(`:${key}`)) {
                     url = url.replace(`:${key}`, encodeURIComponent(val));
                 }
             }
-            // Ajouter les query params
             const queryParams = [];
             for (const [key, val] of Object.entries(values)) {
                 if (val && !endpoint.includes(`:${key}`)) {
@@ -400,27 +819,33 @@
             return url;
         }
 
-        async function callApi(endpointUrl, values) {
-            const fullUrl = API_BASE + buildUrl(endpointUrl, values);
-            console.log('Calling:', fullUrl);
+        async function callApi(endpointUrl, paramsList) {
+            const values = {};
+            for (const param of paramsList) {
+                const input = document.getElementById(`input-${endpointUrl.replace(/[\/:]/g, '-')}-${param.name}`);
+                if (input && input.value) {
+                    values[param.name] = input.value;
+                }
+            }
             
+            const fullUrl = API_BASE + buildUrl(endpointUrl, values);
             const modal = document.getElementById('resultModal');
             const modalTitle = document.getElementById('modalTitle');
             const modalResponse = document.getElementById('modalResponse');
             
-            modalTitle.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> Chargement...`;
-            modalResponse.innerHTML = `<div class="loading-spinner"></div> Chargement de ${endpointUrl}...`;
             modal.classList.add('active');
+            modalTitle.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Chargement...';
+            modalResponse.innerHTML = '<div class="loading"></div> Chargement...';
             
             try {
                 const res = await fetch(fullUrl);
                 const data = await res.json();
                 currentResponseData = JSON.stringify(data, null, 2);
-                modalTitle.innerHTML = `<i class="fas fa-check-circle" style="color: var(--green);"></i> Réponse: ${endpointUrl}`;
+                modalTitle.innerHTML = '<i class="fas fa-check-circle" style="color: var(--green);"></i> Réponse API';
                 modalResponse.innerHTML = `<pre>${escapeHtml(currentResponseData)}</pre>`;
             } catch (err) {
                 currentResponseData = JSON.stringify({ error: err.message, url: fullUrl }, null, 2);
-                modalTitle.innerHTML = `<i class="fas fa-exclamation-triangle" style="color: var(--error);"></i> Erreur`;
+                modalTitle.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: var(--error);"></i> Erreur';
                 modalResponse.innerHTML = `<pre style="color: var(--error);">${escapeHtml(currentResponseData)}</pre>`;
             }
         }
@@ -443,70 +868,63 @@
             setTimeout(() => btn.innerHTML = originalText, 2000);
         }
 
-        function renderEndpointCard(ep, containerId) {
+        function renderEndpoints(containerId, endpoints) {
             const container = document.getElementById(containerId);
             if (!container) return;
-
-            const card = document.createElement('div');
-            card.className = 'endpoint-card';
+            container.innerHTML = '';
             
-            let paramsHtml = '';
-            if (ep.params.length > 0) {
-                paramsHtml = `<div class="params"><strong>Paramètres:</strong>`;
+            endpoints.forEach(ep => {
+                const card = document.createElement('div');
+                card.className = 'endpoint-card';
+                
+                let paramsHtml = '';
                 ep.params.forEach(param => {
                     const inputId = `input-${ep.url.replace(/[\/:]/g, '-')}-${param.name}`;
                     paramsHtml += `
                         <div class="param">
                             <span class="param-name">${param.name}</span>
-                            <input type="text" class="param-input" id="${inputId}" placeholder="${param.desc}" value="${param.default || ''}">
+                            <input type="text" class="test-input" id="${inputId}" placeholder="${param.desc}" value="${param.default || ''}">
                         </div>
                     `;
                 });
-                paramsHtml += `</div>`;
-            }
+                
+                card.innerHTML = `
+                    <span class="method get">${ep.method}</span>
+                    <div class="endpoint-url">${ep.url}</div>
+                    <div class="endpoint-desc">${ep.desc}</div>
+                    <div class="params">${paramsHtml}</div>
+                    <div class="test-area">
+                        <button class="test-btn" data-url="${ep.url}" data-params='${JSON.stringify(ep.params)}'>
+                            <i class="fas fa-play"></i> Tester l'endpoint
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
             
-            card.innerHTML = `
-                <span class="method ${ep.method.toLowerCase()}">${ep.method}</span>
-                <div class="endpoint-url">${ep.url}</div>
-                <div class="endpoint-desc">${ep.desc}</div>
-                ${paramsHtml}
-                <button class="test-btn" onclick="testEndpoint('${ep.url}', ${JSON.stringify(ep.params.map(p => p.name))})">
-                    <i class="fas fa-play"></i> Tester l'endpoint
-                </button>
-            `;
-            container.appendChild(card);
+            // Attacher les événements après le rendu
+            container.querySelectorAll('.test-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const url = btn.dataset.url;
+                    const params = JSON.parse(btn.dataset.params);
+                    callApi(url, params);
+                });
+            });
         }
 
-        window.testEndpoint = function(endpointUrl, paramNames) {
-            const values = {};
-            for (const paramName of paramNames) {
-                const input = document.getElementById(`input-${endpointUrl.replace(/[\/:]/g, '-')}-${paramName}`);
-                if (input && input.value) {
-                    values[paramName] = input.value;
-                }
-            }
-            callApi(endpointUrl, values);
-        };
-
-        function renderEndpoints(containerId, endpoints) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            container.innerHTML = '';
-            endpoints.forEach(ep => renderEndpointCard(ep, containerId));
-        }
-
-        async function loadGlobalStats() {
+        async function loadStats() {
             try {
                 const res = await fetch(`${API_BASE}/api/status`);
                 const data = await res.json();
                 if (data.success) {
                     document.getElementById('totalAnimes').innerText = data.server.animesCount || 0;
                     document.getElementById('totalScans').innerText = data.server.scansCount || 0;
-                    document.getElementById('totalPlayers').innerText = '25+';
+                    document.getElementById('totalPlayers').innerText = Object.keys(data.players || {}).length || '17';
                     document.getElementById('domainStatus').innerText = data.domain.current?.split('.')[0] || 'anime-sama';
                     document.getElementById('statAnimes').innerText = data.server.animesCount || 0;
                     document.getElementById('statScans').innerText = data.server.scansCount || 0;
-                    document.getElementById('statPlayers').innerText = '25+';
+                    document.getElementById('statPlayers').innerText = Object.keys(data.players || {}).length || '17';
                 }
             } catch(e) { console.warn(e); }
         }
@@ -563,10 +981,6 @@
             if (section === 'status') loadServerStatus();
         }
 
-        // Fermer modal avec Echap
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
-
-        // Particules
         function createParticles() {
             const container = document.getElementById('particles');
             for(let i=0;i<40;i++) {
@@ -596,13 +1010,16 @@
             renderEndpoints('animeEndpoints', animeEndpoints);
             renderEndpoints('scanEndpoints', scanEndpoints);
             renderEndpoints('utilsEndpoints', utilsEndpoints);
-            loadGlobalStats();
+            loadStats();
             loadServerStatus();
             document.getElementById('hamburgerBtn').addEventListener('click', toggleSidebar);
             document.getElementById('closeDrawerBtn').addEventListener('click', closeSidebar);
             document.getElementById('drawerOverlay').addEventListener('click', closeSidebar);
             document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); navigateTo(item.dataset.section); }));
         });
+
+        // Fermer modal avec Echap
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
     </script>
 </body>
 </html>
