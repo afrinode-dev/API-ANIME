@@ -75,60 +75,149 @@ async function detectMainDomain() {
     let mainDomain = null;
     let mainDomainUrl = null;
 
-    $('a').each((i, element) => {
+    // Méthode 1: Rechercher le tableau "Statut des domaines"
+    // Chercher les lignes du tableau qui contiennent des domaines anime-sama
+    const domainPattern = /anime-sama\.[a-z]+/g;
+    const foundDomains = new Map(); // domain -> status code
+
+    // Parcourir toutes les cellules du tableau
+    $('td').each((i, element) => {
       const text = $(element).text().trim();
-      const href = $(element).attr('href');
-
-      if ((text.includes('ACCÉDER À ANIME-SAMA') ||
-        text.includes('Accéder à Anime Sama')) &&
-        href && href.includes('anime-sama')) {
-
-        const domainMatch = href.match(/https?:\/\/([^\/]+)/);
-        if (domainMatch) {
-          mainDomain = domainMatch[1];
-          mainDomainUrl = href;
+      // Chercher un domaine dans le texte
+      const domainMatch = text.match(/anime-sama\.[a-z]+/);
+      if (domainMatch) {
+        const domain = domainMatch[0];
+        // Chercher le statut dans les cellules voisines ou la même ligne
+        const row = $(element).closest('tr');
+        const rowText = row.text();
+        
+        // Extraire le code de statut (200, 302, etc.)
+        const statusMatch = rowText.match(/\((\d{3})\)/);
+        const statusCode = statusMatch ? parseInt(statusMatch[1]) : null;
+        
+        // Vérifier si c'est un statut OK ou redirection valide
+        if (statusCode === 200 || statusCode === 302 || statusCode === 301) {
+          if (!foundDomains.has(domain)) {
+            foundDomains.set(domain, statusCode);
+          }
         }
       }
     });
 
-    if (mainDomain) {
-      CONFIG.mainDomain = mainDomain;
-      CONFIG.baseUrl = mainDomainUrl.startsWith('http') ? mainDomainUrl : `https://${mainDomain}`;
-      console.log(`✅ Domaine principal détecté: ${CONFIG.mainDomain}`);
-    } else {
-      const potentialDomains = ['https://anime-sama.tv', 'https://anime-sama.eu', 'https://anime-sama.si'];
+    // Méthode 2: Rechercher tous les liens contenant anime-sama
+    $('a').each((i, element) => {
+      const href = $(element).attr('href');
+      if (href && href.includes('anime-sama')) {
+        const domainMatch = href.match(/https?:\/\/([^\/]+)/);
+        if (domainMatch) {
+          const domain = domainMatch[1];
+          if (!foundDomains.has(domain)) {
+            // Tester si le domaine répond
+            foundDomains.set(domain, null);
+          }
+        }
+      }
+    });
 
-      for (const domain of potentialDomains) {
+    // Méthode 3: Chercher dans le texte "Domaine principal" ou "Statut"
+    $('p, div, span').each((i, element) => {
+      const text = $(element).text();
+      if (text.includes('domaine principal') || text.includes('Nom de domaine principal')) {
+        const domainMatch = text.match(/anime-sama\.[a-z]+/);
+        if (domainMatch) {
+          const domain = domainMatch[0];
+          if (!foundDomains.has(domain)) {
+            foundDomains.set(domain, 200);
+          }
+        }
+      }
+    });
+
+    // Tester chaque domaine trouvé pour voir s'il est accessible
+    const testedDomains = [];
+    for (const [domain, statusFromTable] of foundDomains) {
+      if (statusFromTable === 200) {
+        // Si déjà marqué comme 200 dans le tableau, c'est probablement le bon
+        mainDomain = domain;
+        mainDomainUrl = `https://${domain}`;
+        console.log(`✅ Domaine trouvé via tableau: ${domain}`);
+        break;
+      }
+      
+      // Tester le domaine
+      try {
+        const testUrl = `https://${domain}`;
+        const testResponse = await axios.get(testUrl, {
+          headers: { 'User-Agent': CONFIG.userAgent },
+          timeout: 5000,
+          maxRedirects: 5
+        });
+        
+        const finalUrl = testResponse.request.res.responseUrl || testUrl;
+        const finalDomainMatch = finalUrl.match(/https?:\/\/([^\/]+)/);
+        const finalDomain = finalDomainMatch ? finalDomainMatch[1] : domain;
+        
+        testedDomains.push({ domain: finalDomain, status: testResponse.status });
+        
+        if (testResponse.status === 200) {
+          mainDomain = finalDomain;
+          mainDomainUrl = finalUrl;
+          console.log(`✅ Domaine actif trouvé: ${mainDomain}`);
+          break;
+        }
+      } catch (error) {
+        // Ignorer les erreurs, continuer avec le prochain domaine
+      }
+    }
+
+    // Si aucun domaine n'a été trouvé, utiliser la liste de secours
+    if (!mainDomain) {
+      const fallbackDomains = ['anime-sama.to', 'anime-sama.si', 'anime-sama.tv'];
+      
+      for (const domain of fallbackDomains) {
         try {
-          const testResponse = await axios.get(domain, {
+          const testUrl = `https://${domain}`;
+          const testResponse = await axios.get(testUrl, {
             headers: { 'User-Agent': CONFIG.userAgent },
-            timeout: 5000
+            timeout: 5000,
+            maxRedirects: 5
           });
-
-          if (testResponse.status === 200) {
-            CONFIG.mainDomain = domain.replace('https://', '');
-            CONFIG.baseUrl = domain;
-            console.log(`✅ Domaine de secours trouvé: ${CONFIG.mainDomain}`);
+          
+          const finalUrl = testResponse.request.res.responseUrl || testUrl;
+          const finalDomainMatch = finalUrl.match(/https?:\/\/([^\/]+)/);
+          const finalDomain = finalDomainMatch ? finalDomainMatch[1] : domain;
+          
+          if (testResponse.status === 200 || testResponse.status === 302) {
+            mainDomain = finalDomain;
+            mainDomainUrl = finalUrl;
+            console.log(`✅ Domaine de secours trouvé: ${mainDomain}`);
             break;
           }
         } catch (error) {
           continue;
         }
       }
-
-      if (!CONFIG.mainDomain) {
-        CONFIG.mainDomain = CONFIG.currentDomain;
-        CONFIG.baseUrl = `https://${CONFIG.mainDomain}`;
-      }
     }
+
+    // Dernier recours: utiliser le domaine par défaut
+    if (!mainDomain) {
+      mainDomain = CONFIG.currentDomain;
+      mainDomainUrl = `https://${CONFIG.currentDomain}`;
+      console.log(`⚠️ Aucun domaine trouvé, utilisation du domaine par défaut: ${mainDomain}`);
+    }
+
+    CONFIG.mainDomain = mainDomain;
+    CONFIG.baseUrl = mainDomainUrl.startsWith('http') ? mainDomainUrl : `https://${mainDomain}`;
+    
+    console.log(`📌 Domaine principal configuré: ${CONFIG.mainDomain}`);
+    return CONFIG.mainDomain;
 
   } catch (error) {
     console.error('❌ Erreur accès au portail:', error.message);
     CONFIG.mainDomain = CONFIG.currentDomain;
     CONFIG.baseUrl = `https://${CONFIG.mainDomain}`;
+    return CONFIG.mainDomain;
   }
-
-  return CONFIG.mainDomain;
 }
 
 // ==================== FONCTIONS DE PARSING ====================
@@ -148,11 +237,23 @@ async function checkUrlExists(url) {
   try {
     const response = await axios.head(url, {
       headers: { 'User-Agent': CONFIG.userAgent },
-      timeout: 5000
+      timeout: 5000,
+      maxRedirects: 5
     });
     return response.status === 200;
   } catch (error) {
-    return false;
+    // Si HEAD échoue, essayer GET avec limite
+    try {
+      const getResponse = await axios.get(url, {
+        headers: { 'User-Agent': CONFIG.userAgent },
+        timeout: 5000,
+        maxRedirects: 5,
+        validateStatus: (status) => status < 400
+      });
+      return getResponse.status === 200;
+    } catch (e) {
+      return false;
+    }
   }
 }
 
