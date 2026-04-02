@@ -816,34 +816,45 @@ app.get('/api/status', async (req, res) => {
   });
 });
 
-// Route racine
+// Route racine - Page de documentation API
 app.get('/', (req, res) => {
-  res.json({
-    name: 'Anime API',
-    version: '2.0.0',
-    description: 'API pour anime',
-    endpoints: {
-      anime: {
-        list: 'GET /api/anime',
-        details: 'GET /api/anime/:id',
-        seasons: 'GET /api/anime/:id/saison/:season',
-        episode: 'GET /api/anime/:id/saison/:season/episode/:number'
-      },
-      search: 'GET /api/search?q=query',
-      players: 'GET /api/players',
-      proxy: 'GET /api/proxy/stream?url=video_url',
-      status: 'GET /api/status'
-    }
-  });
+  try {
+    const htmlPath = path.resolve(__dirname, 'api.html');
+    const html = fs.readFileSync(htmlPath, 'utf8');
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (e) {
+    res.json({
+      name: 'Anime-Sama API',
+      version: '1.0.0',
+      status: 'running',
+      endpoints: {
+        status: '/api/status',
+        search: '/api/search?q=naruto',
+        anime: {
+          list: '/api/anime',
+          details: '/api/anime/:id',
+          season: '/api/anime/:id/saison/:season',
+          episode: '/api/anime/:id/saison/:season/episode/:number'
+        },
+        scan: {
+          list: '/api/scans',
+          details: '/api/scan/:id',
+          chapter: '/api/scan/:id/chapitre/:number'
+        }
+      }
+    });
+  }
 });
 
 // Middleware 404
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    error: 'Endpoint non trouvé'
+    error: 'Endpoint non trouvé',
+    documentation: '/'
   });
 });
 
-// Export pour Vercel
+// Export pour Vercel (PAS de app.listen)
 module.exports = app;
